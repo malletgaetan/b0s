@@ -1,0 +1,10 @@
+nice resources:
+
+- https://wiki.osdev.org/Brendan%27s_Memory_Management_Guide
+- https://linux-mm.org/LinuxMMInternals
+- https://www.kernel.org/doc/Documentation/x86/x86_64/mm.txt
+- https://github.com/dreamportdev/Osdev-Notes
+- https://0xax.gitbooks.io/linux-insides/content/MM/linux-mm-1.html
+
+
+You should take your time to design the memory management system, as a limited one will tend to get in your way when adding features to your operating system. Its fine it you already have a global view of your system.

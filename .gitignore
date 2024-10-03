@@ -1,0 +1,7 @@
+*.o
+*.O
+b0s/iso/boot/b0s.elf
+b0s.elf
+b0s.iso
+qemu.log
+

@@ -1,0 +1,58 @@
+- we program the APIC by writing/reading registers
+- registers are memory mapped in the CPU address space
+- this address space (a 4KB page at 0xFEE00000 pa) should be designated as strong uncacheable (UC) (section 11.3)
+- we can choose to move this mapping (10.4.5) and (10.12)
+- all access should be made with 32bit read/write, while being 16bytes aligned
+- pictures of the register/address at section 10.5
+- each different core reference the same base address, but the hardware automatically switch between teh different local apic for eah core
+
+
+DETECT PRESENCE OF LOCAL APIC:
+- cpuid with eax=1
+- if bit 9 of EDX then lapic is present
+
+ENABLE LOCAL APIC, 2 WAYS:
+-> by using the MSR register, IA32_APIC_BASE[11] (section 10-5 | address 1BH)
+-> by using enable/disable flag in spurious interrupt vector register (figure 10-23)
+
+LOCAL APIC STATUS AND LOCATION:
+IA32_APIC_BASE[8] is BSP (bootstrap processor)
+IA32_APIC_BASE[11] tu sais
+IA32_APIC_BASE[12-35] 24bit value + low 12bit 0 padding -> base address (0xFEE00000)
+all other bit of IA32_APIC_BASE are reserved
+
+
+Maybe switch to x2APIC ?
+avantages:
+- can use more than 15(8bit ID) core with 32bit ID
+- access to APIC register with MSR
+
+
+DETECTING AND ENABLING x2APIC MODE:
+cpuid with eax to 1 and checking bit 21 of ECX
+
+enable it in IA32_APIC_BASE MSR at MSR address 01BH (figure 10-26 and figure 10-5) by setting
+bit 10(x2APIC mode) and 11(xApic global enable/disable) to 1
+
+GENERAL NOTES FOR INTERACTION WITH x2APIC REGISTERS:
+1. WRMSR causes #GP(0) for read-only registers.
+2. WRMSR causes #GP(0) for attempts to set a reserved bit to 1 in a read/write register (including bits 63:32 of each register).
+3. RDMSR causes #GP(0) for write-only registers.
+4. MSR 831H is reserved; read/write operations cause general-protection exceptions. The contents of the APIC register at MMIO offset
+310H are accessible in x2APIC mode through the MSR at address 830H.
+5. SELF IPI register is supported only in x2APIC mode.
+
+
+!!!!
+rdmsr and wrmsr will not wait for all load values to be globally load, meaning you can't trust registers values
+except for the argument of msr. If you need to believe values, use mfence and sfence
+
+-> = need
+paging -> interrupts (for debugging) -> apic -> madt -> acpi -> multiboot2 header
+
+
+nice resources:
+- osdev forum
+- https://blog.wesleyac.com/posts/ioapic-interrupts
+- Intel Volume 3A Part 1 - https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-vol-3a-part-1-manual.pdf
+- https://habr.com/en/articles/446312/
