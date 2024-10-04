@@ -299,7 +299,7 @@ static void *next_virt_page(struct vmm_space *space, u64 size_in_pages) {
 	struct vmm_region *cur = space->region;
 
 	while (cur != NULL) {
-		if (((u64)cur->va_start - (u64)start) > size_in_pages * PAGE_SIZE_IN_BYTES) // should be >=, > so that each vm alloc have a non mapped page between them
+		if ((((u64)cur->va_start - (u64)start) - 1) > size_in_pages * PAGE_SIZE_IN_BYTES) // each vmm_alloc(NULL) have a non mapped page between them
 			break ;
 		start = cur->va_stop;
 		cur = cur->next;

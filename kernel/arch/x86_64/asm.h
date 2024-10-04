@@ -6,6 +6,10 @@
 
 // https://wiki.osdev.org/Inline_Assembly/Examples
 
+static inline void load_tr(u16 selector) {
+    __asm__ __volatile__ ("ltr %0" : : "r" (selector) : "memory");
+}
+
 static inline void lidt(struct idtr *idtr) {
 	__asm__ __volatile__ ("lidt (%0)" : : "r" (idtr) : "memory");
 }
@@ -58,7 +62,7 @@ static inline u64 rdmsr(u32 msr) {
 }
 
 static inline void wrmsr(u32 msr, u64 value) {
-	u32 low = value & 0xffffffff;
+	u32 low = value & U32_MAX;
 	u32 high = value >> 32;
 	__asm__ volatile (
 		"wrmsr"

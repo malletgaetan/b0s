@@ -46,12 +46,12 @@ u64 interrupt_handler(u64 rsp) {
 }
 
 void idt_set_entry(u8 vector, u64 handler, u8 type) {
-	idt[vector].offset0_15 = handler & 0xffff;
+	idt[vector].offset0_15 = handler & U16_MAX;
 	idt[vector].selector = GDT_KERNEL_CODE_INDEX * 8;
 	idt[vector].ist = 0;
 	idt[vector].attributes = type;
-	idt[vector].offset16_31 = (handler >> 16) & 0xffff;
-	idt[vector].offset32_63 = (handler >> 32) & 0xffffffff;
+	idt[vector].offset16_31 = (handler >> 16) & U16_MAX;
+	idt[vector].offset32_63 = (handler >> 32) & U32_MAX;
 	idt[vector].zero = 0;
 }
 

@@ -186,6 +186,7 @@ _entry_64:
 ; stack should be linked with C kernel code
 section .bss
 
+global stack_top_64
 align 16 ; 16 bytes alignement follow the System V AMD64 ABI (actually we can choose not to)
 stack_bottom_64:
 resb 16384 ; same as dd but with uninitilized data

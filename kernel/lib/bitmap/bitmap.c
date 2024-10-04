@@ -1,4 +1,6 @@
 #ifndef TESTER
+#include "kernel/mm/vmm/kheap.h"
+
 #include "kernel/lib/bitmap/bitmap.h"
 #include "kernel/lib/string/string.h"
 #include "kernel/lib/debug/debug.h"
@@ -12,6 +14,16 @@ u64 *bitmap_init(struct bitmap *bm, u64 len, u64 *ptr) {
 	bm->len = len;
 	bm->size_in_block = (len / 64) + 1;
 	bm->bitmap = ptr;
+	memset((u8 *)bm->bitmap, 0xff, bm->size_in_block * sizeof(u64));
+	return (u64 *)((u64)ptr + bm->size_in_block);
+}
+
+u64 *bitmap_init_kheap(struct bitmap *bm, u64 len) {
+	bm->len = len;
+	bm->size_in_block = (len / 64) + 1;
+	bm->bitmap = kmalloc(sizeof(u64) * bm->size_in_block);
+	if (bm->bitmap == NULL)
+		return NULL;
 	memset((u8 *)bm->bitmap, 0xff, bm->size_in_block * sizeof(u64));
 	return (u64 *)((u64)ptr + bm->size_in_block);
 }

@@ -50,7 +50,7 @@
 # define IO_APIC_ID 0x00
 # define IO_APIC_VER 0x01
 # define IO_APIC_ARB 0x02
-# define IO_APIC_REDTBL(n) (0x10 + 2 * n)
+# define IO_APIC_REDIRECTION_TBL(n) (0x10 + 2 * n)
 
 void	io_apic_init(void);
 void	local_apic_init(void);

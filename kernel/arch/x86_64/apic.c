@@ -44,7 +44,7 @@ void local_apic_eoi(void) {
 
 // trigger an interrupt in 10 milliseconds
 void local_apic_timer_arm(void) {
-	// TODO: handle multiple quantum
+	// TODO: handle multiple quanta
 	// ->function takes parameter + set higher divider depending on millisecond value
 	u32 reg = (rdmsr(LVT_TIMER_REGISTER) & ~(LVT_MASK)) | IDT_TIMER_INT; // mask off + vector 100
 	wrmsr(LVT_TIMER_REGISTER, reg);
@@ -56,11 +56,11 @@ void local_apic_timer_arm(void) {
 void local_apic_timer_calibrate(void) {
 	u32 conf = rdmsr(DIVIDE_CONFIGURATION_REGISTER);
 	wrmsr(DIVIDE_CONFIGURATION_REGISTER, conf | TIMER_DIVIDE_BY_2); // divide frequency so we don't wrap around, even divide by 1 is sufficient on my current computer but let's play it safe
-	wrmsr(INITIAL_COUNT_REGISTER, 0xffffffff); // LAPIC timer count down
+	wrmsr(INITIAL_COUNT_REGISTER, U32_MAX); // LAPIC timer count down
 
 	hpet_sleep(10);
 
-	timer_ticks_per_10ms = 0xffffffff - rdmsr(CURRENT_COUNTER_REGISTER);
+	timer_ticks_per_10ms = U32_MAX - rdmsr(CURRENT_COUNTER_REGISTER);
 
 	wrmsr(INITIAL_COUNT_REGISTER, 0); // disable
 	local_apic_timer_arm();
