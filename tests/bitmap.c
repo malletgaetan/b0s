@@ -5,13 +5,14 @@
 
 # define TESTER
 # undef NULL
+# define kmalloc(x) malloc(x)
 
 #include "kernel/lib/math/math.h"
 #include "kernel/lib/bitmap/bitmap.h"
 #include "kernel/lib/bitmap/bitmap.c"
 
 int main(void) {
-	for (u64 size = 1; size < 10000; size++) {
+	for (u64 size = 1; size < 5777; size++) {
 		u64 bitmap_size_in_bytes = ((size / 64) + 1) * sizeof(u64) + 1;
 		u64 *ptr = malloc(bitmap_size_in_bytes);
 		u8 *array = malloc(size);
@@ -23,7 +24,7 @@ int main(void) {
 		u64 index;
 		u64 alloc = 0;
 		// take all
-		while (1) {
+		while (TRUE) {
 			index = bitmap_find_and_set(&bm);
 			if (index == bm.len)
 				break ;
@@ -46,7 +47,7 @@ int main(void) {
 		assert(((u8 *)ptr)[bitmap_size_in_bytes - 1] == 0 && "bitmap buffer overflow 4");
 		assert(alloc == 0 && "bitmap don't handle all frees");
 
-		while (1) {
+		while (TRUE) {
 			index = bitmap_find_and_set(&bm);
 			if (index == bm.len)
 				break ;

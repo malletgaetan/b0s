@@ -1,40 +1,50 @@
-#include "kernel/types.h"
-#include "kernel/sched.h"
-#include "kernel/task.h"
+// #include "kernel/types.h"
+// #include "kernel/sched.h"
+// #include "kernel/task.h"
 
-struct task *tasks = NULL;
-struct task *current_task = NULL;
+// #include "kernel/lib/debug/debug.h"
 
-void	sched_add_task(struct task *task) {
-	task->next = tasks;
-	tasks = task;
-}
+// static struct task *tasks = NULL;
+// static struct task *current_task = NULL;
 
-u8		sched_remove_task(struct task *task) {
-	struct task **cur = &tasks;
+// void sched_add_task(struct task *task) {
+// 	task->next = tasks;
+// 	tasks = task;
+// }
 
-	while () {
-		cur = &((*cur)->next);
-	}
-}
+// u8 sched_remove_task(struct task *task) {
+// 	struct task **cur = &tasks;
 
-// noreturn
-// what happen if nothing to be ran?
-void	sched_run(void) {
-	struct task *cur = tasks;
+// 	while (*cur != task) {
+// 		if (*cur == NULL)
+// 			return 1;
+// 		cur = &((*cur)->next);
+// 	}
+// 	*cur = (*cur)->next;
+// 	return 0;
+// }
 
-	while (cur != NULL) {
-		switch (cur->status) {
-			case TASK_DEAD:
-				task_destroy(cur);
-				break ;
-			case TASK_READY:
-				current_task = cur;
-				// schedule
-				break ;
-			default:
-				break ;
-		}
-		cur = cur->next;
-	}
-}
+// // returns the task to be ran
+// struct task *sched_run(struct cpu_status *context) {
+// 	TRACE("%s: start sched", __func__);
+
+// 	current_task->context = context;
+
+// 	struct task *t = current_task->next;
+// 	while (t != current_task) {
+// 		if (t == NULL) {
+// 			t = tasks;
+// 			continue ;
+// 		}
+
+// 		if (t->status == TASK_READY) {
+// 			current_task->status = TASK_READY;
+// 			t->status = TASK_RUNNING;
+// 			current_task = t;
+// 			break ;
+// 		}
+
+// 		t = t->next;
+// 	}
+// 	return current_task;
+// }

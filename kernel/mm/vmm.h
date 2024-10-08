@@ -35,6 +35,10 @@ void 	*vmm_alloc(struct vmm_space *space, void *va, u64 size_in_pages, u64 flags
 void 	vmm_free(struct vmm_space *space, void *va, u64 size_in_pages);
 void 	vmm_dump_space(struct vmm_space *space);
 
+
+struct	vmm_space	*vmm_create_space(void *va_start, void *va_stop);
+void				vmm_delete_space(struct vmm_space *space);
+
 // implemented in arch/$arch/mmu.c
 // require the pt_alloc to be initialized
 u64		mmu_map_page(struct vmm_space *space, void *va, void *pa, u64 flags);

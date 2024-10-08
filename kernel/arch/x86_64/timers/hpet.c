@@ -1,5 +1,5 @@
 #include "kernel/arch/x86_64/asm.h"
-#include "kernel/arch/x86_64/hpet.h"
+#include "kernel/arch/x86_64/timers/hpet.h"
 
 #include "kernel/acpi.h"
 #include "kernel/mm/vmm.h"

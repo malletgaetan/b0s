@@ -1,4 +1,4 @@
-#include "kernel/arch/x86_64/gdt.h"
+#include "kernel/arch/x86_64/mm/gdt.h"
 #include "kernel/arch/x86_64/asm.h"
 
 #include "kernel/lib/printk/printk.h"

@@ -41,7 +41,6 @@ void acpi_init(const struct acpi_rsdp *rsdp) {
 		panic("%s: invalid rsdp", __func__);
 
 	rsdt = (struct acpi_rsdt *)DM_P2V((u64)rsdp->rsdt_address);
-	printk("rsdt is at %p phys\n", DM_V2P(rsdt));
 
 	if (checksum((u8 *)rsdt, (u64)rsdt->h.length))
 		panic("%s: invalid rsdt", __func__);

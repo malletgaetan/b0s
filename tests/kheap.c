@@ -10,6 +10,7 @@
 # define panic(...) assert(NULL)
 
 #include "kernel/types.h"
+#include "kernel/lib/math/math.h"
 #include "kernel/mm/paging.h"
 
 struct vmm_space {
@@ -57,8 +58,7 @@ int *random_array(int size) {
 	return array;
 }
 
-int main(void) {
-	kheap_init(1);
+void stress_test(void) {
 	for (u64 nb_allocs = 100; nb_allocs < 5000; nb_allocs += 7) {
 		int *alloc_array = random_array(nb_allocs);
 		void **ptr_array = malloc(nb_allocs * sizeof(void *));
@@ -67,6 +67,7 @@ int main(void) {
 		for (u64 i = 0; i < nb_allocs; i++) {
 			ptr_array[i] = kmalloc(alloc_array[i]);
 			assert(ptr_array[i] != NULL);
+			assert(IS_ALIGNED(ptr_array[i], KHEAP_ALIGN_IN_BYTES));
 			memset(ptr_array[i], 0xff, alloc_array[i]); // try to corrupt
 		}
 		u64 stop = random_range(2, nb_allocs - 2);
@@ -76,6 +77,7 @@ int main(void) {
 		for (u64 i = 0; i < stop; i++) {
 			ptr_array[i] = kmalloc(alloc_array[i]);
 			assert(ptr_array[i] != NULL);
+			assert(IS_ALIGNED(ptr_array[i], KHEAP_ALIGN_IN_BYTES));
 			memset(ptr_array[i], 0xff, alloc_array[i]); // try to corrupt
 		}
 		for (u64 i = 0; i < nb_allocs ; i++) {
@@ -85,4 +87,17 @@ int main(void) {
 		free(alloc_array);
 		free(ptr_array);
 	}
+}
+
+void big_alloc_test(void) {
+	void *ptr = kmalloc(65536); // really big stack
+	assert(ptr != NULL);
+	memset(ptr, 0xff, 65536); // try to corrupt
+	kfree(ptr);
+}
+
+int main(void) {
+	kheap_init(1);
+	stress_test();
+	big_alloc_test();
 }

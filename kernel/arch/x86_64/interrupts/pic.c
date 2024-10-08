@@ -1,5 +1,5 @@
 #include "kernel/arch/x86_64/asm.h"
-#include "kernel/arch/x86_64/pic.h"
+#include "kernel/arch/x86_64/interrupts/pic.h"
 
 // from https://github.com/dreamportdev/Osdev-Notes/blob/master/02_Architecture/07_APIC.md
 void pic_disable(void) {

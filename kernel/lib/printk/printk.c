@@ -65,7 +65,7 @@ static u8 print_arg(char specifier, va_list *ap)
 
 static void interpret(const char *format, va_list *args)
 {
-	while (1) {
+	while (TRUE) {
 		while (*format != '%') {
 			if ((*format) == '\0')
 				return ;

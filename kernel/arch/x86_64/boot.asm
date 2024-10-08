@@ -1,7 +1,7 @@
 #define ASM_FILE
 #include "kernel/multiboot2.h"
-#include "kernel/arch/x86_64/gdt.h"
-#include "kernel/arch/x86_64/paging.h"
+#include "kernel/arch/x86_64/mm/gdt.h"
+#include "kernel/arch/x86_64/mm/paging.h"
 #include "kernel/mm/layout.h"
 
 %define MULTIBOOT_FLAGS (0x0)
@@ -187,6 +187,7 @@ _entry_64:
 section .bss
 
 global stack_top_64
+global stack_bottom_64
 align 16 ; 16 bytes alignement follow the System V AMD64 ABI (actually we can choose not to)
 stack_bottom_64:
 resb 16384 ; same as dd but with uninitilized data

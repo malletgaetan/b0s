@@ -1,8 +1,8 @@
-#include "kernel/arch/x86_64/idt.h"
 #include "kernel/arch/x86_64/asm.h"
-#include "kernel/arch/x86_64/apic.h"
-#include "kernel/arch/x86_64/pic.h"
-#include "kernel/arch/x86_64/hpet.h"
+#include "kernel/arch/x86_64/timers/hpet.h"
+#include "kernel/arch/x86_64/interrupts/idt.h"
+#include "kernel/arch/x86_64/interrupts/apic.h"
+#include "kernel/arch/x86_64/interrupts/pic.h"
 
 #include "kernel/acpi.h"
 #include "kernel/mm/vmm.h"

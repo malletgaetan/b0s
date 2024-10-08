@@ -1,2 +1,9 @@
 nice resources:
 - https://linux-kernel-labs.github.io/refs/heads/master/lectures/processes.html
+
+Start by implementing cooperative multitasking
+
+1 - implement cooperative multitasking (no scheduler)
+- https://wiki.osdev.org/Cooperative_Multitasking
+
+2 - implement preemptive multitasking

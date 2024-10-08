@@ -366,6 +366,7 @@ void vmm_init_direct_mapping(void) {
 		struct vmm_region *region = vmm_add_range(kspace, DM_P2V(addr.pa), DM_P2V(addr.pa) + PAGE_SIZE_IN_BYTES, flags);
 		if (region == NULL)
 			panic("DAM");
+		kernel_dm_stop = DM_P2V(addr.pa);
 		if (mmu_map_page(kspace, DM_P2V(addr.pa), addr.pa, flags))
 			panic("%s: mapping an already mapped entry va=%p | pa=%p", __func__, DM_P2V(addr.pa), addr.pa);
 		addr = pmm_next_phys_page(addr.pa);
@@ -374,7 +375,7 @@ void vmm_init_direct_mapping(void) {
 
 void vmm_init(void) {
 	// map kernel code/data and direct mapping of available memory
-	kspace = vmm_create_space((void *)kernel_dm_start, (void *)HIGHER_HALF_STOP);
+	kspace = vmm_create_space((void *)HIGHER_HALF_START, (void *)HIGHER_HALF_STOP);
 	mmu_init(kspace); // let the setup of page directory to arch dependent code
 
 	struct vmm_region *kuefi = vmm_add_range(kspace, kernel_vma_rw_start, kernel_vma_rw_stop, PAGE_KERNEL_RW);

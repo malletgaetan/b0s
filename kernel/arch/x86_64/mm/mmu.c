@@ -1,4 +1,4 @@
-#include "kernel/arch/x86_64/paging.h"
+#include "kernel/arch/x86_64/mm/paging.h"
 #include "kernel/arch/x86_64/asm.h"
 
 #include "kernel/types.h"

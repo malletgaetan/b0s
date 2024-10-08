@@ -2,7 +2,7 @@
 # define ASM_H
 # include "kernel/types.h"
 
-# include "kernel/arch/x86_64/idt.h"
+# include "kernel/arch/x86_64/interrupts/idt.h"
 
 // https://wiki.osdev.org/Inline_Assembly/Examples
 
@@ -16,11 +16,6 @@ static inline void lidt(struct idtr *idtr) {
 
 static inline void sti(void) {
 	__asm__ __volatile__ ("sti" : : : "memory", "cc");
-}
-
-static inline void halt(void) {
-	while (1) 
-		__asm__ volatile ("hlt");
 }
 
 // leaf -> eax | subleaf -> ecx

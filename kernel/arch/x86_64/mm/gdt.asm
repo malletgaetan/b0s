@@ -1,5 +1,5 @@
 #define ASM_FILE
-#include "kernel/arch/x86_64/gdt.h"
+#include "kernel/arch/x86_64/mm/gdt.h"
 
 global gdt_reload_asm
 gdt_reload_asm:

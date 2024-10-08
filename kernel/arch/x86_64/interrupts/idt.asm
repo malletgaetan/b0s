@@ -47,7 +47,7 @@ _general_handler_asm:
 	push r14
 	push r15
 
-	cld // TODO: not sure why everyone does this ?
+	cld // TODO: apparently it can change I have no idea when though
 	mov rdi, rsp
 	call interrupt_handler
 	mov rsp, rax ; return pointer to rsp, could also use rdi

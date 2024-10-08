@@ -48,13 +48,20 @@ static struct block *try_alloc_block(struct container *container, u64 size_in_by
 	found_block:
 	b->used = TRUE;
 	b->container->used_blocks++;
+
+	u64 block_end = (u64)BLOCK_DATA(b) + b->size_in_bytes;
+	u64 block_end_after_alloc = (u64)BLOCK_DATA(b) + size_in_bytes;
+
+	u64 next_block_struct_end = (u64)ROUNDUP(block_end_after_alloc + sizeof(struct block), KHEAP_ALIGN_IN_BYTES);
+	u64 next_block = next_block_struct_end - sizeof(struct block);
+
 	// not enough size to split the block, just return it
-	if (b->size_in_bytes <= size_in_bytes + sizeof(struct block))
+	if (next_block_struct_end >= block_end)
 		return b;
 	// resize and return the b block, and create a free block after
 
-	struct block *new_b = (struct block *)((u64)BLOCK_DATA(b) + size_in_bytes);
-	new_b->size_in_bytes = (b->size_in_bytes - sizeof(struct block)) - size_in_bytes;
+	struct block *new_b = (struct block *)next_block;
+	new_b->size_in_bytes = block_end - next_block_struct_end;
 	new_b->prev = b;
 	new_b->next = b->next;
 	new_b->used = FALSE;

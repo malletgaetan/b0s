@@ -7,4 +7,4 @@ nice resources:
 - https://0xax.gitbooks.io/linux-insides/content/MM/linux-mm-1.html
 
 
-You should take your time to design the memory management system, as a limited one will tend to get in your way when adding features to your operating system. Its fine it you already have a global view of your system.
+You should take your time to design the memory management system, as a limited one will tend to get in your way when adding features to your operating system. Its fine if you already have a global view of your system tho.

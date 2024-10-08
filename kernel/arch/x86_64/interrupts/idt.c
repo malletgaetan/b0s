@@ -1,9 +1,13 @@
+#include "kernel/arch/x86_64/cpu.h"
 #include "kernel/arch/x86_64/asm.h"
-#include "kernel/arch/x86_64/apic.h"
-#include "kernel/arch/x86_64/idt.h"
-#include "kernel/arch/x86_64/gdt.h"
+#include "kernel/arch/x86_64/interrupts/apic.h"
+#include "kernel/arch/x86_64/interrupts/idt.h"
+#include "kernel/arch/x86_64/mm/gdt.h"
 #include "kernel/lib/debug/debug.h"
 #include "kernel/lib/printk/printk.h"
+
+#include "kernel/task.h"
+#include "kernel/sched.h"
 
 extern u64 idt_vectors[];
 
@@ -19,15 +23,14 @@ u64 interrupt_handler(u64 rsp) {
 	struct cpu_status *status = (struct cpu_status *)rsp;
 
 	switch (status->vector_number) {
-		case IDT_TIMER_INT: // OMG ITS WORKING
-			count++;
-			if (count == 100) {
-				count = 0;
-				printk("1 seconds passed\n");
-			}
-			local_apic_timer_arm();
+		case IDT_TIMER_INT:
+			// struct task *task = sched_run(status); // return the task to be ran
+			// local_apic_timer_arm();
+			// local_apic_eoi();
+			// return (u64)task->context;
 			break ;
 		case IDT_PAGE_FAULT: // page fault
+			// TODO: if userspace task -> kill else panic
 			printk("PAGE FAULT:");
 			printk("error occured at %p\n", status->rip);
 			printk("error code %b\n", status->error_code);
@@ -36,10 +39,7 @@ u64 interrupt_handler(u64 rsp) {
 		case IDT_SPURIOUS_INT:
 			break ;
 		default:
-			printk("unexepected interrupt: vector %u\n", status->vector_number);
-			printk("RIP %p\n", status->rip);
-			panic("unexepected interrupt: error code %b\n", status->error_code);
-			break ;
+			panic("unexepected interrupt: vector %u | error %u\n", status->vector_number, status->error_code);
 	}
 	local_apic_eoi();
 	return rsp;

@@ -26,7 +26,9 @@ C_SRCS = kernel/kmain.c \
 		 kernel/lib/bitmap/bitmap.c \
 		 kernel/mm/pmm.c \
 		 kernel/mm/vmm.c \
-		 kernel/mm/kheap.c
+		 kernel/mm/kheap.c \
+		 kernel/task.c \
+		 kernel/sched.c
 
 ASM_SRCS =
 

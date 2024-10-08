@@ -1,4 +1,5 @@
 #include "kernel/types.h"
+#include "kernel/cpu.h"
 #include "kernel/mm/layout.h"
 #include "kernel/mm/paging.h"
 #include "kernel/mm/kheap.h"
@@ -7,6 +8,8 @@
 #include "kernel/interrupts.h"
 #include "kernel/acpi.h"
 #include "kernel/multiboot2.h"
+#include "kernel/task.h"
+// #include "kernel/sched.h"
 #include "kernel/drivers/vga/vga.h" // NOOO
 
 #include "kernel/lib/debug/debug.h"
@@ -42,6 +45,27 @@ static u8 read_tags(struct multiboot_tag *mb_infos) {
 	return ((bitmap & expected_bitmap) != expected_bitmap);
 }
 
+
+void	_task_2(void) {
+	static u32 nb = 0;
+	while (TRUE) {
+		while (++nb != 0)
+			;
+		printk("TASK 2 TICK!\n");
+		task_yield();
+	}
+}
+
+void	_task_1(void) {
+	static u32 nb = 0;
+	while (TRUE) {
+		while (++nb != 0)
+			;
+		printk("TASK 1 TICK!\n");
+		task_yield();
+	}
+}
+
 // TODO: Way too much type casting, it can be enhanced and will be.
 // NOTE: sub modules, like acpi or irq shouldn't return pointers, mutation should always occur by using the given API.
 int kmain(u32 magic, void *mb_infos_ptr) {
@@ -58,16 +82,23 @@ int kmain(u32 magic, void *mb_infos_ptr) {
 
 	interrupts_entry_init();
 
-	u64 available_pages = pmm_init(mmap); // setup page allocator
-	printk("%u MiB of memory available\n", BYTE2MB(available_pages * PAGE_SIZE_IN_BYTES));
+	u64 available_pages = pmm_init(mmap); printk("kernel: %u MiB available\n", BYTE2MB(available_pages * PAGE_SIZE_IN_BYTES));
+	vmm_init();
+	kheap_init(1);
 
-	vmm_init(); // setup kernel space and switch to new paging
-	kheap_init(1); // setup kernel heap allocator
 	acpi_init(rsdp);
 	interrupts_init();
-	vmm_dump_space(kspace);
 
-	printk("kernel: [OK]\n");
+	task_init();
 
-	while (1);
+	// TEST
+	struct task *task1 = task_create(TASK_KERNEL, "TASK 1", (u64)_task_1);
+	struct task *task2 = task_create(TASK_KERNEL, "TASK 2", (u64)_task_2);
+	task1->next = task2;
+	task2->next = task1;
+
+	debug_task_set_current_task(task1);
+
+	while (1)
+		task_yield();
 }
