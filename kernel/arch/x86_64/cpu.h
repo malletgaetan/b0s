@@ -3,7 +3,17 @@
 
 #include "kernel/types.h"
 
-struct cpu_status {
+struct context {
+	u64	r12;
+	u64	r13;
+	u64	r14;
+	u64	r15;
+	u64	rbp;
+	u64	rbx;
+	u64 rip;
+} __attribute__((__packed__));
+
+struct trap_frame {
 	u64 r15;
 	u64 r14;
 	u64 r13;

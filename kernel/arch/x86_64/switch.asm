@@ -1,8 +1,8 @@
 [BITS 64]
 
-global task_switch_asm
-// void	task_switch(u64 *cur_rsp, u64 *next_rsp)
-task_switch_asm:
+global process_switch_asm
+// void	process_switch(struct context *cur, struct context *next)
+process_switch_asm:
 	push rbx
 	push rbp
 	push r15

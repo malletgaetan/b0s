@@ -1,11 +1,13 @@
-// #ifndef SCHED_H
-// # define SCHED_H
-// # include "kernel/types.h"
+#ifndef SCHED_H
+# define SCHED_H
 
-// # include "kernel/task.h"
+# include "kernel/types.h"
+# include "kernel/process.h"
 
-// void		sched_add_task(struct task *task);
-// u8			sched_remove_task(struct task *task);
-// struct task *sched_run(struct cpu_status *context);
+void	sched_add_process(struct process *process);
+void	sched_remove_process(struct process *process);
+void	sched_switch(void); // will switch of kernel stack if possible
+void 	sched_set_boot(struct process *boot_proc); // used once for the bootstrap process
+void 	sched_start(void); // will start the periodic timer
 
-// #endif
+#endif

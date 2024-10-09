@@ -27,7 +27,7 @@ C_SRCS = kernel/kmain.c \
 		 kernel/mm/pmm.c \
 		 kernel/mm/vmm.c \
 		 kernel/mm/kheap.c \
-		 kernel/task.c \
+		 kernel/process.c \
 		 kernel/sched.c
 
 ASM_SRCS =
@@ -54,7 +54,7 @@ all: $(NAME)
 
 $(NAME): $(ELF)
 	cp $(ELF) iso/boot/$(ELF)
-	grub-mkrescue -o $@ iso 2> /dev/null
+	grub2-mkrescue -o $@ iso 2> /dev/null
 
 $(ELF): $(OBJS) $(EXTENDED_SCRIPT)
 	$(CC) $(LDFLAGS) -T $(EXTENDED_SCRIPT) -o $(ELF) $(OBJS) -nostdlib -lgcc

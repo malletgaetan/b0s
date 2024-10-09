@@ -43,10 +43,10 @@ void local_apic_eoi(void) {
 }
 
 // trigger an interrupt in 10 milliseconds
-void local_apic_timer_arm(void) {
+void local_apic_periodic_timer(void) {
 	// TODO: handle multiple quanta
 	// ->function takes parameter + set higher divider depending on millisecond value
-	u32 reg = (rdmsr(LVT_TIMER_REGISTER) & ~(LVT_MASK)) | IDT_TIMER_INT; // mask off + vector 100
+	u32 reg = (rdmsr(LVT_TIMER_REGISTER) & ~(LVT_MASK)) | LVT_PERIODIC | IDT_TIMER_INT; // mask off + vector 100
 	wrmsr(LVT_TIMER_REGISTER, reg);
 
 	wrmsr(INITIAL_COUNT_REGISTER, timer_ticks_per_10ms); // will now wrap around every 10ms
@@ -63,7 +63,6 @@ void local_apic_timer_calibrate(void) {
 	timer_ticks_per_10ms = U32_MAX - rdmsr(CURRENT_COUNTER_REGISTER);
 
 	wrmsr(INITIAL_COUNT_REGISTER, 0); // disable
-	local_apic_timer_arm();
 }
 
 void local_apic_init(void) {

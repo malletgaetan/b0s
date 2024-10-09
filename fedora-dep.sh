@@ -1,0 +1,1 @@
+dnf install gcc gcc-c++ make bison flex gmp-devel libmpc-devel libmpc-devel mpfr-devel texinfo qemu wget nasm xorriso grub2 grub2-tools

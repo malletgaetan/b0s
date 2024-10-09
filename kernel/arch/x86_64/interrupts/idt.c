@@ -6,7 +6,7 @@
 #include "kernel/lib/debug/debug.h"
 #include "kernel/lib/printk/printk.h"
 
-#include "kernel/task.h"
+#include "kernel/process.h"
 #include "kernel/sched.h"
 
 extern u64 idt_vectors[];
@@ -17,29 +17,32 @@ struct idt_entry idt[IDT_SIZE];
 void idt_debug_call(u8 vec) {
 	((void (*)(void))idt_vectors[vec])();
 }
+
 u64 count = 0;
 
 u64 interrupt_handler(u64 rsp) {
-	struct cpu_status *status = (struct cpu_status *)rsp;
+	struct trap_frame *state = (struct trap_frame *)rsp;
 
-	switch (status->vector_number) {
-		case IDT_TIMER_INT:
-			// struct task *task = sched_run(status); // return the task to be ran
-			// local_apic_timer_arm();
-			// local_apic_eoi();
-			// return (u64)task->context;
+	switch (state->vector_number) {
+		case IDT_TIMER_INT: // preempt
+			count += 1;
+			if (count == 100) {
+				printk("tick !\n");
+				count = 0;
+			}
+			// sched_switch(); // after this point, don't trust what's on the stack
 			break ;
 		case IDT_PAGE_FAULT: // page fault
-			// TODO: if userspace task -> kill else panic
+			// TODO: if userspace -> kill else panic
 			printk("PAGE FAULT:");
-			printk("error occured at %p\n", status->rip);
-			printk("error code %b\n", status->error_code);
+			printk("error occured at %p\n", state->rip);
+			printk("error code %b\n", state->error_code);
 			panic("look at at the CR2 reigister value to found out which address caused the page fault");
 			break ;
 		case IDT_SPURIOUS_INT:
 			break ;
 		default:
-			panic("unexepected interrupt: vector %u | error %u\n", status->vector_number, status->error_code);
+			panic("unexepected interrupt: vector %u | error %u\n", state->vector_number, state->error_code);
 	}
 	local_apic_eoi();
 	return rsp;

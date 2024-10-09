@@ -1,50 +1,44 @@
-// #include "kernel/types.h"
-// #include "kernel/sched.h"
-// #include "kernel/task.h"
+#include "kernel/types.h"
+#include "kernel/sched.h"
+#include "kernel/process.h"
 
-// #include "kernel/lib/debug/debug.h"
+#include "kernel/lib/debug/debug.h"
 
-// static struct task *tasks = NULL;
-// static struct task *current_task = NULL;
+static struct process *scheduled_procs = NULL;
 
-// void sched_add_task(struct task *task) {
-// 	task->next = tasks;
-// 	tasks = task;
-// }
+static struct process *running = NULL;
 
-// u8 sched_remove_task(struct task *task) {
-// 	struct task **cur = &tasks;
+void sched_set_boot(struct process *boot_proc) {
+	running = boot_proc;
+	scheduled_procs = boot_proc;
+}
 
-// 	while (*cur != task) {
-// 		if (*cur == NULL)
-// 			return 1;
-// 		cur = &((*cur)->next);
-// 	}
-// 	*cur = (*cur)->next;
-// 	return 0;
-// }
+void sched_add_process(struct process *proc) {
+	scheduled_procs->next = proc;
+	scheduled_procs = proc;
+}
 
-// // returns the task to be ran
-// struct task *sched_run(struct cpu_status *context) {
-// 	TRACE("%s: start sched", __func__);
+void sched_remove_process(struct process *proc) {
+	struct process **cur = &scheduled_procs; // linus be proud
 
-// 	current_task->context = context;
+	while (*cur != proc) {
+		if (*cur == NULL)
+			return ;
+		cur = &((*cur)->next);
+	}
+	*cur = (*cur)->next;
+}
 
-// 	struct task *t = current_task->next;
-// 	while (t != current_task) {
-// 		if (t == NULL) {
-// 			t = tasks;
-// 			continue ;
-// 		}
+void sched_switch(void) {
+	struct process *proc = scheduled_procs;
 
-// 		if (t->status == TASK_READY) {
-// 			current_task->status = TASK_READY;
-// 			t->status = TASK_RUNNING;
-// 			current_task = t;
-// 			break ;
-// 		}
+	while (proc != NULL) {
+		if (proc->state == PROCESS_READY) {
+			process_switch(running, proc);
+			return ;
+		}
+		proc = proc->next;
+	}
+}
 
-// 		t = t->next;
-// 	}
-// 	return current_task;
-// }
+void sched_start(void); // will start the periodic timer

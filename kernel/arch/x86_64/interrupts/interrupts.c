@@ -26,3 +26,7 @@ void interrupts_init(void) {
 	local_apic_timer_calibrate();
 	io_apic_init();
 }
+
+void interrupts_timer_start(void) {
+	local_apic_periodic_timer();
+}

@@ -9,7 +9,7 @@
 // support for x2APIC on qemu is quite bad as TCG doesn't support it, kvm needs to be enabled.
 # define LOCAL_APIC_ID 0x802 // read-only
 # define LOCAL_APIC_VERSION 0x803 // read-only
-# define TASK_PRIORITY_REGISTER 0x808 // read/write
+# define PROCESS_PRIORITY_REGISTER 0x808 // read/write
 # define PROCESSOR_PRIORITY_REGISTER 0x80a // read-only
 # define EOI_REGISTER 0x80b // write-only
 # define LOGICAL_DESTINATION_REGISTER 0x80d // read-only
@@ -42,6 +42,7 @@
 # define TIMER_DIVIDE_BY_1 0b1011
 
 # define LVT_MASK (1 << 16)
+# define LVT_PERIODIC (1 << 17)
 
 
 # define IO_APIC_REGISTER_SELECT 0x0
@@ -56,6 +57,6 @@ void	io_apic_init(void);
 void	local_apic_init(void);
 void	local_apic_timer_calibrate(void);
 void 	local_apic_eoi(void);
-void 	local_apic_timer_arm(void);
+void 	local_apic_periodic_timer(void);
 
 #endif

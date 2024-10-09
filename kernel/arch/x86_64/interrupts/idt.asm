@@ -50,8 +50,10 @@ _general_handler_asm:
 	cld // TODO: apparently it can change I have no idea when though
 	mov rdi, rsp
 	call interrupt_handler
-	mov rsp, rax ; return pointer to rsp, could also use rdi
+	; mov rsp, rax ; return pointer to rsp, could also use rdi
 
+	global trap_ret ; first process userspace switch will jump here directly and not return from interrupt_handler
+	trap_ret:
 	pop r15
 	pop r14
 	pop r13
