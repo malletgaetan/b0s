@@ -1,7 +1,7 @@
 #include "kernel/arch/x86_64/asm.h"
 #include "kernel/arch/x86_64/timers/hpet.h"
 
-#include "kernel/acpi.h"
+#include "kernel/drivers/acpi/acpi.h"
 #include "kernel/mm/vmm.h"
 #include "kernel/mm/paging.h"
 #include "kernel/mm/layout.h"

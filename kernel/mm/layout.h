@@ -12,6 +12,10 @@
 
 # define MAXIMUM_SUPPORTED_MEMORY_IN_BYTES 0x1000000000 // 64gb
 
+# define KERNEL_HEAP_START ((u64)kernel_vma_start - (u64)MAXIMUM_SUPPORTED_MEMORY_IN_BYTES)
+# define KERNEL_HEAP_STOP ((u64)kernel_vma_start)
+
+
 # define KERNEL_VMA 0xffffffff80000000
 
 # if !defined(ASM_FILE) && !defined(LINKER_FILE)

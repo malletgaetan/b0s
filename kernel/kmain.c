@@ -6,10 +6,10 @@
 #include "kernel/mm/pmm.h"
 #include "kernel/mm/vmm.h"
 #include "kernel/interrupts.h"
-#include "kernel/acpi.h"
+#include "kernel/drivers/acpi/acpi.h"
 #include "kernel/multiboot2.h"
-#include "kernel/process.h"
-// #include "kernel/sched.h"
+#include "kernel/multitasking/process.h"
+#include "kernel/multitasking/sched.h"
 #include "kernel/drivers/vga/vga.h" // NOOO
 
 #include "kernel/lib/debug/debug.h"
@@ -45,14 +45,29 @@ static u8 read_tags(struct multiboot_tag *mb_infos) {
 	return ((bitmap & expected_bitmap) != expected_bitmap);
 }
 
+// idle task
 void schleeeeep(void) {
+	sched_switch();
 	while (TRUE)
 		cpu_halt();
 }
 
+struct process *create_init_process(void) {
+	u64 program_entry = (u64)0x1000;
+	struct process *init = process_create("init", program_entry);
+	if (init == NULL)
+		panic("%s: failed to create init process", __func__);
+	if (vmm_alloc_at(init->space, (void *)program_entry, 1, PAGE_USER_RO) == NULL)
+		panic("OHH");
 
-// TODO: Way too much type casting, it can be enhanced and will be.
-// NOTE: sub modules, like acpi or irq shouldn't return pointers, mutation should always occur by using the given API.
+	mmu_switch_space(init->space);
+
+	*(u8 *)program_entry = 0xeb;
+	*((u8 *)program_entry + 1) = 0xfe;
+
+	return init;
+}
+
 int kmain(u32 magic, void *mb_infos_ptr) {
 	vga_reset(); // TODO: shouldn't rely on pure driver here, should abstract console
 
@@ -74,13 +89,11 @@ int kmain(u32 magic, void *mb_infos_ptr) {
 	acpi_init(rsdp);
 	interrupts_init();
 
-	while (1)
-		;
+	process_init(); // set current
+	struct process *init = create_init_process();
+	sched_add_process(init);
 
-	// process_bootstrap(&schleeeeep); // setup current process and schedule it
-
-	// sched_start();
-	// sched_switch();
-
-	// panic("%s: unreachable");
+	sched_start();
+	schleeeeep();
+	panic("%s: unreachable", __func__);
 }

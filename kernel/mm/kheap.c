@@ -2,6 +2,7 @@
 #include "kernel/mm/kheap.h"
 #include "kernel/mm/vmm.h"
 #include "kernel/mm/paging.h"
+#include "kernel/mm/layout.h"
 
 #include "kernel/lib/debug/debug.h"
 #endif
@@ -77,7 +78,8 @@ static struct block *try_alloc_block(struct container *container, u64 size_in_by
 
 static struct container *create_container(u64 size_in_pages) {
 	size_in_pages = MAX(KHEAP_MIN_ALLOC_IN_PAGES, size_in_pages);
-	struct container *c = (struct container *)vmm_alloc(kspace, NULL, size_in_pages, PAGE_KERNEL_RW);
+	struct container *c = (struct container *)vmm_alloc_between(kspace, (void *)KERNEL_HEAP_START, (void *)KERNEL_HEAP_STOP, size_in_pages, PAGE_KERNEL_RW);
+	printk("container alloc at %p\n", c);
 	if (c == NULL)
 		return NULL;
 
@@ -113,7 +115,9 @@ static void remove_container(struct container *container) {
 }
 
 void kheap_init(u64 size_in_pages) {
-	create_container(size_in_pages);
+	printk("allocate between %p and %p\n", KERNEL_HEAP_START, KERNEL_HEAP_STOP);
+	if (create_container(size_in_pages) == NULL)
+		panic("%s: failed to init kheap", __func__);
 }
 
 void *kmalloc(u64 size_in_bytes) {
@@ -126,6 +130,8 @@ void *kmalloc(u64 size_in_bytes) {
 		c = c->next;
 	}
 	c = create_container(((size_in_bytes + sizeof(struct block)) / PAGE_SIZE_IN_BYTES) + 2); // aggresively overallocate
+	if (c == NULL)
+		return NULL;
 	b = try_alloc_block(c, size_in_bytes);
 	if (b == NULL)
 		panic("%s: the impossible is possible", __func__);

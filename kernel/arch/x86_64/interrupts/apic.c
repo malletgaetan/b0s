@@ -4,7 +4,7 @@
 #include "kernel/arch/x86_64/interrupts/apic.h"
 #include "kernel/arch/x86_64/interrupts/pic.h"
 
-#include "kernel/acpi.h"
+#include "kernel/drivers/acpi/acpi.h"
 #include "kernel/mm/vmm.h"
 #include "kernel/mm/paging.h"
 #include "kernel/mm/layout.h"

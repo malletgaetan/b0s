@@ -1,7 +1,7 @@
 #ifndef ARCH_PROCESS_H
 # define ARCH_PROCESS_H
 # include "kernel/types.h"
-# include "kernel/process.h"
+# include "kernel/multitasking/process.h"
 
 struct process {
 	u16					pid;
@@ -17,7 +17,6 @@ struct process {
 
 void 	process_switch(struct process *cur, struct process *next);
 void 	process_first_run(void);
-void 	process_arch_init(struct process *proc, u64 entry);
-// void 	process_arch_boot_init(struct process *proc);
+void 	process_arch_init(struct process *proc, u64 entry, u64 ustack);
 
 #endif

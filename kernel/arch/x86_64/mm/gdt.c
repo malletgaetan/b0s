@@ -29,6 +29,10 @@ struct gdt_entry gdt[GDT_SIZE] = {
 
 extern void	gdt_reload_asm(struct gdt_descriptor *desc);
 
+void gdt_set_tss_rsp(u64 rsp0) {
+	tss.rsp0 = rsp0;
+}
+
 void gdt_init_tss(void) {
 	// set values of TSS
     tss.reserved0 = 0x00;

@@ -3,6 +3,9 @@ ENHANCEMENTS:
 - VMM shouldn't panic itself, returns errors, I like the functional way of doing it, so like Rust with a Result<Ok, Err>
 - implement tests/vmm.c
 - care about alignment
+- stack trace on panics
+- not fond of all the type casts, find your way
+- adjust KHEAP_START and KHEAP_STOP dynamically, or maybe just don't use them
 
 FEATURES:
 - handle multiple cores

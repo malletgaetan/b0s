@@ -14,6 +14,10 @@ static inline void lidt(struct idtr *idtr) {
 	__asm__ __volatile__ ("lidt (%0)" : : "r" (idtr) : "memory");
 }
 
+static inline void cli(void) {
+	__asm__ __volatile__ ("cli" : : : "memory", "cc");
+}
+
 static inline void sti(void) {
 	__asm__ __volatile__ ("sti" : : : "memory", "cc");
 }

@@ -5,7 +5,7 @@
 #include "kernel/arch/x86_64/timers/hpet.h"
 #include "kernel/arch/x86_64/mm/gdt.h"
 
-#include "kernel/acpi.h"
+#include "kernel/drivers/acpi/acpi.h"
 #include "kernel/lib/debug/debug.h"
 #include "kernel/lib/printk/printk.h"
 

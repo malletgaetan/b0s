@@ -8,17 +8,18 @@
 # define TESTER
 # undef NULL
 # define panic(...) assert(NULL)
+# define KERNEL_HEAP_START ((u64)0)
+# define KERNEL_HEAP_STOP ((u64)0)
 
 #include "kernel/types.h"
 #include "kernel/lib/math/math.h"
 #include "kernel/mm/paging.h"
 
-struct vmm_space {
-};
+struct vmm_space;
 
 struct vmm_space *kspace = NULL;
 
-void *vmm_alloc(struct vmm_space *space, void *va, u64 size_in_pages, u64 flags);
+void *vmm_alloc_between(struct vmm_space *space, void *lower_va, void *upper_va, u64 size_in_pages, u64 flags);
 void vmm_free(struct vmm_space *space, void *va, u64 size_in_pages);
 
 #include "kernel/mm/kheap.h"
@@ -27,9 +28,10 @@ void vmm_free(struct vmm_space *space, void *va, u64 size_in_pages);
 u64 total_vmm_allocated = 0;
 u64 total_vmm_freed = 0;
 
-void *vmm_alloc(struct vmm_space *space, void *va, u64 size_in_pages, u64 flags) {
+void *vmm_alloc_between(struct vmm_space *space, void *lower_va, void *upper_va, u64 size_in_pages, u64 flags) {
 	(void)space;
-	(void)va;
+	(void)lower_va;
+	(void)upper_va;
 	(void)flags;
 	total_vmm_allocated += size_in_pages;
 	return malloc(size_in_pages * PAGE_SIZE_IN_BYTES); // backing with malloc for valgrind debug

@@ -1,3 +1,5 @@
+#include "kernel/cpu.h"
+
 #include "kernel/lib/printk/printk.h"
 #include "kernel/lib/debug/debug.h"
 
@@ -8,5 +10,6 @@ void panic(char *fmt, ...) {
 	_printk(fmt, &args);
 	va_end(args);
 	printk("\n");
-	while(1); // never returns
+	while (1)
+		cpu_halt();
 }

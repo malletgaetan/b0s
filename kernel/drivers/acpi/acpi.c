@@ -1,4 +1,4 @@
-#include "kernel/acpi.h"
+#include "kernel/drivers/acpi/acpi.h"
 #include "kernel/mm/layout.h"
 
 #include "kernel/lib/printk/printk.h"

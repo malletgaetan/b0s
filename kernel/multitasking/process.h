@@ -15,11 +15,10 @@ enum process_state {
 };
 
 # if defined(__x86_64__)
-# include "kernel/arch/x86_64/process.h"
+# include "kernel/arch/x86_64/multitasking/process.h"
 # endif
 
-struct process		*process_create(char *process_name, u64 entry);
-
-void debug_process_set_current_task(struct process *k);
+struct process	*process_create(char *process_name, u64 uentry);
+void 			process_init(void);
 
 #endif

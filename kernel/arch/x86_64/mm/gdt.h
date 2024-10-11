@@ -79,6 +79,7 @@ struct gdt_descriptor {
 extern struct gdt_entry gdt[GDT_SIZE];
 void	gdt_reload(void);
 void 	gdt_load_tss(void);
+void 	gdt_set_tss_rsp(u64 rsp0);
 
 # endif
 #endif

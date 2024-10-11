@@ -1,7 +1,7 @@
 [BITS 64]
 
 global process_switch_asm
-// void	process_switch(struct context *cur, struct context *next)
+// void	process_switch(struct context **cur, struct context *next)
 process_switch_asm:
 	push rbx
 	push rbp
@@ -10,8 +10,8 @@ process_switch_asm:
 	push r13
 	push r12
 
-	mov QWORD [rdi], rsp // save rsp to old
-	mov rsp, QWORD [rsi] // load new rsp
+	mov QWORD [rdi], rsp // set current context to rsp
+	mov rsp, QWORD rsi // load new rsp
 
 	// we're now on the next task stack
 	pop r12

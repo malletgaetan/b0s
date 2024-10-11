@@ -1,6 +1,6 @@
 #include "kernel/types.h"
-#include "kernel/sched.h"
-#include "kernel/process.h"
+#include "kernel/multitasking/sched.h"
+#include "kernel/multitasking/process.h"
 
 #include "kernel/lib/debug/debug.h"
 
@@ -8,9 +8,9 @@ static struct process *scheduled_procs = NULL;
 
 static struct process *running = NULL;
 
-void sched_set_boot(struct process *boot_proc) {
-	running = boot_proc;
-	scheduled_procs = boot_proc;
+void sched_init(struct process *proc) {
+	running = proc;
+	scheduled_procs = proc;
 }
 
 void sched_add_process(struct process *proc) {
@@ -40,5 +40,3 @@ void sched_switch(void) {
 		proc = proc->next;
 	}
 }
-
-void sched_start(void); // will start the periodic timer

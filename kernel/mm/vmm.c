@@ -24,10 +24,6 @@ struct block *block_heads[NUM_TYPES] = {NULL};
 struct vmm_space *kspace;
 
 // START Virtual Memory Manager Object Allocator ------
-// Why would we need specific allocator for the VMM ?
-// kmalloc is not yet initialized + since kmalloc will make calls
-// to vmm to get virtual memory, we don't want to have circular dependencies.
-// If you're reading this and know a better solution, please reach out.
 
 // For the moment its implemented as a bitmap, could be a stack based allocator for fast
 // alloc and dealloc but since it resides in the direct mapping, any overflow would be
@@ -131,7 +127,7 @@ static void vmm_probe_space(struct vmm_space *space) {
 }
 #endif
 
-struct vmm_region *vmm_create_region(struct vmm_space *space, void *va_start, void *va_stop, u64 flags, struct vmm_region *prev, struct vmm_region *next) {
+static struct vmm_region *vmm_create_region(struct vmm_space *space, void *va_start, void *va_stop, u64 flags, struct vmm_region *prev, struct vmm_region *next) {
 	struct vmm_region *region = block_alloc(TYPE_VMM_REGION);
 
 	if (prev == NULL)
@@ -151,7 +147,7 @@ struct vmm_region *vmm_create_region(struct vmm_space *space, void *va_start, vo
 	return region;
 }
 
-void vmm_remove_region(struct vmm_space *space, struct vmm_region *region) {
+static void vmm_remove_region(struct vmm_space *space, struct vmm_region *region) {
 	if (region->prev == NULL && region->next == NULL) {
 		space->region = NULL;
 	} else {
@@ -208,13 +204,10 @@ struct vmm_region *vmm_insert_range(struct vmm_space *space, struct vmm_region *
 }
 
 // returns the region containing the va_start and va_stop
-struct vmm_region *vmm_add_range(struct vmm_space *space, void *va_start, void *va_stop, u64 flags) {
+static struct vmm_region *vmm_add_range(struct vmm_space *space, void *va_start, void *va_stop, u64 flags) {
 	ASSERT(IS_ALIGNED(va_start, PAGE_SIZE_IN_BYTES), "%s: va_start should be aligned\n", __func__);
 	ASSERT(IS_ALIGNED(va_stop, PAGE_SIZE_IN_BYTES), "%s: va_stop should be aligned\n", __func__);
 	ASSERT(va_start != va_stop, "%s: va_start and va_stop shouldn't be equals\n", __func__);
-
-	if (va_start < space->va_start || va_stop > space->va_stop)
-		panic("%s: add range outside of space range");
 
 	if (space->region == NULL)
 		return vmm_create_region(space, va_start, va_stop, flags, NULL, NULL);
@@ -275,8 +268,6 @@ void vmm_remove_range(struct vmm_space *space, void *va_start, void *va_stop) {
 
 struct vmm_space *vmm_create_space(void *va_start, void *va_stop) {
 	struct vmm_space *space = block_alloc(TYPE_VMM_SPACE);
-	space->va_start = va_start;
-	space->va_stop = va_stop;
 	space->region = NULL;
 	mmu_init(space);
 	return space;
@@ -294,29 +285,55 @@ void vmm_delete_space(struct vmm_space *space) {
 	block_free(space, TYPE_VMM_SPACE);
 }
 
-static void *next_virt_page(struct vmm_space *space, u64 size_in_pages) {
-	void *start = space->va_start;
+// returns address of first usable byte in va
+void *vmm_alloc_between(struct vmm_space *space, void *lower_va, void *upper_va, u64 size_in_pages, u64 flags) {
+	// search va range
+	u64 size_in_bytes = size_in_pages * PAGE_SIZE_IN_BYTES;
+	u64 va = (u64)lower_va;
+	u64 padding = 2 * PAGE_SIZE_IN_BYTES;
 	struct vmm_region *cur = space->region;
+	struct vmm_region *prev = NULL;
 
 	while (cur != NULL) {
-		if ((((u64)cur->va_start - (u64)start) - 1) > size_in_pages * PAGE_SIZE_IN_BYTES) // each vmm_alloc(NULL) have a non mapped page between them
+		if ((u64)cur->va_stop < (u64)lower_va)
+			goto loop_next;
+
+		va = MAX(va, (u64)lower_va);
+		if ((u64)cur->va_start - va >= size_in_bytes + padding)
 			break ;
-		start = cur->va_stop;
+		loop_next:
+		va = (u64)cur->va_stop;
+		prev = cur;
 		cur = cur->next;
 	}
-	if (cur == NULL)
-		panic("128tb mon gourmand");
-	return (void *)((u64)start + PAGE_SIZE_IN_BYTES);
+
+	if (va + size_in_bytes + padding >= (u64)upper_va)
+		return NULL;
+
+	va += PAGE_SIZE_IN_BYTES; // padding
+
+	struct vmm_region *region = vmm_insert_range(space, prev, cur, (void *)va, (void *)(va + size_in_bytes), flags);
+	if (region == NULL)
+		return NULL;
+
+	for (u64 _va = (u64)va; _va < (u64)region->va_stop; _va += PAGE_SIZE_IN_BYTES) {
+		void *pa = pmm_xalloc(); // TODO: replace all pmm_xalloc with pmm_alloc + errors message
+		if (mmu_map_page(space, (void *)_va, pa, flags) != 0)
+			panic("%s: overwrite of an already used virtual address %p", __func__, _va);
+	}
+
+	return (void *)va;
 }
 
-// returns address of first usable byte in virtual address
-void *vmm_alloc(struct vmm_space *space, void *va, u64 size_in_pages, u64 flags) {
+// returns address of first usable byte in va
+void *vmm_alloc_at(struct vmm_space *space, void *va, u64 size_in_pages, u64 flags) {
 	if (va == NULL)
-		va = next_virt_page(space, size_in_pages);
+		return NULL;
 
 	struct vmm_region *region = vmm_add_range(space, va, (void *)((u64)va + (size_in_pages * PAGE_SIZE_IN_BYTES)), flags);
 	if (region == NULL)
-		panic("HEHE");
+		return NULL;
+
 	for (u64 _va = (u64)va; _va < (u64)region->va_stop; _va += PAGE_SIZE_IN_BYTES) {
 		void *pa = pmm_xalloc(); // TODO: replace all pmm_xalloc with pmm_alloc + errors message
 		if (mmu_map_page(space, (void *)_va, pa, flags) != 0)
@@ -376,7 +393,6 @@ void vmm_init_direct_mapping(void) {
 void vmm_init(void) {
 	// map kernel code/data and direct mapping of available memory
 	kspace = vmm_create_space((void *)HIGHER_HALF_START, (void *)HIGHER_HALF_STOP);
-	mmu_init(kspace); // let the setup of page directory to arch dependent code
 
 	struct vmm_region *kuefi = vmm_add_range(kspace, kernel_vma_rw_start, kernel_vma_rw_stop, PAGE_KERNEL_RW);
 	struct vmm_region *kcode = vmm_add_range(kspace, kernel_vma_ro_start, kernel_vma_ro_stop, PAGE_KERNEL_RO);
@@ -399,8 +415,24 @@ void vmm_init(void) {
 	#endif
 }
 
+// TODO: enhance design
+// what to do if something went wrong in the middle of the copy?
+// its a general problem in the VMM, if something went wrong in the middle of an action on the 
+// page mapping, what should we do?
+// there is a lot of possibilites, for the moment we'll stick with instant panics.
+void vmm_copy_regions(struct vmm_space *dst, struct vmm_space *src) {
+	struct vmm_region *region = src->region;
+
+	while (region != NULL) {
+		if (vmm_add_range(dst, region->va_start, region->va_stop, region->flags) == NULL)
+			panic("%s: copy on region possibly corrupted", __func__);
+		mmu_copy_pages(dst, src, region);
+		region = region->next;
+	}
+}
+
 void vmm_dump_space(struct vmm_space *space) {
-	printk("[SPACE] %p -> %p\n", space->va_start, space->va_stop);
+	printk("[SPACE]\n");
 	printk("---------------------------------------\n");
 	for (struct vmm_region *region = space->region; region != NULL; region = region->next) {
 		printk("%p -> %p | [%uKiB]\n", region->va_start, region->va_stop, BYTE2KB((u64)region->va_stop - (u64)region->va_start));

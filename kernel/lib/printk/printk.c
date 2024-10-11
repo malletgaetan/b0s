@@ -27,7 +27,20 @@ static void putnbr(u64 nbr, u8 base) {
 static void putptr(u64 ptr) {
 	vga_putchar('0', VGA_WHITE);
 	vga_putchar('x', VGA_WHITE);
-	putnbr(ptr, 16);
+
+	u8 log = U64_MAX_LOG_BASE(16);
+	char array[log];
+
+	u8 i = log - 1;
+
+	do {
+		array[i--] = HEX_ALPHA[ptr % 16];
+		ptr = ptr / 16;
+	} while (i != U8_MAX);
+
+	i++;
+	while (i <= log - 1)
+		vga_putchar(array[i++], VGA_WHITE);
 }
 
 static void putstr(char *str) {

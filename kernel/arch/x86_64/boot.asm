@@ -115,7 +115,7 @@ _entry_32:
 	test edx, 1 << 26
 	jz _hardware_not_supported
 
-	; hardware is 64-bit ready
+	; hardware is 64-bit ready -- https://wiki.osdev.org/CPU_Registers_x86-64#CR4
 	mov eax, cr4
 	or eax, 1 << 5 ; enable PAE
 	or eax, 1 << 7 ; enable GLOBAL PAGES

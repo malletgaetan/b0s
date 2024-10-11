@@ -6,8 +6,8 @@
 #include "kernel/lib/debug/debug.h"
 #include "kernel/lib/printk/printk.h"
 
-#include "kernel/process.h"
-#include "kernel/sched.h"
+#include "kernel/multitasking/process.h"
+#include "kernel/multitasking/sched.h"
 
 extern u64 idt_vectors[];
 
@@ -25,12 +25,9 @@ u64 interrupt_handler(u64 rsp) {
 
 	switch (state->vector_number) {
 		case IDT_TIMER_INT: // preempt
-			count += 1;
-			if (count == 100) {
-				printk("tick !\n");
-				count = 0;
-			}
-			// sched_switch(); // after this point, don't trust what's on the stack
+			cli();
+			sched_switch(); // after this point, don't trust what's on the stack
+			sti();
 			break ;
 		case IDT_PAGE_FAULT: // page fault
 			// TODO: if userspace -> kill else panic

@@ -10,12 +10,12 @@ QEMU = qemu-system-x86_64
 AS = nasm
 EXTENDED_SCRIPT = extended_kernel.ld
 QEMU = qemu-system-x86_64
-# QEMU_FLAGS = -d int,cpu_reset -D qemu.log -M smm=off -net none -smp 1 -m 64M -cpu qemu64,+pdpe1gb -M hpet=on --no-reboot
-QEMU_FLAGS = -d int,cpu_reset -D qemu.log -M q35,smm=off -net none -smp 1 -m 128M -cpu host -enable-kvm
+# QEMU_FLAGS = -d int,cpu_reset -D qemu.logs -M smm=off -net none -smp 1 -m 64M -cpu qemu64,+pdpe1gb -M hpet=on --no-reboot
+QEMU_FLAGS = -d int,cpu_reset -D qemu.logs -M q35,smm=off -net none -smp 1 -m 128M -cpu host -enable-kvm
 ARCH = $(shell $(CC) -dumpmachine | cut -f1 -d-)
 
 C_SRCS = kernel/kmain.c \
-		 kernel/acpi.c \
+		 kernel/drivers/acpi/acpi.c \
 		 kernel/drivers/vga/vga.c \
 		 kernel/lib/debug/panic.c \
 		 kernel/lib/printk/printk.c \
@@ -27,8 +27,8 @@ C_SRCS = kernel/kmain.c \
 		 kernel/mm/pmm.c \
 		 kernel/mm/vmm.c \
 		 kernel/mm/kheap.c \
-		 kernel/process.c \
-		 kernel/sched.c
+		 kernel/multitasking/process.c \
+		 kernel/multitasking/sched.c
 
 ASM_SRCS =
 
@@ -76,7 +76,7 @@ clean:
 	rm -f $(EXTENDED_SCRIPT)
 	rm -f $(ELF)
 	rm -f $(NAME)
-	rm -f qemu.log
+	rm -f qemu.logs
 	find tests -type f ! -name "*.c" -delete
 
 run: $(NAME)
@@ -94,7 +94,7 @@ tests: $(wildcard tests/*.c)
 		base=$$(basename $$file .c); \
 		echo "Running $$file..."; \
 		gcc -I ./ -o tests/$$base $$file; \
-		./tests/$$base; \
+		valgrind ./tests/$$base; \
 		status=$$?; \
 		rm -f tests/$$base; \
 		if [ $$status -eq 0 ]; then \
