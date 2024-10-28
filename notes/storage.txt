@@ -1,0 +1,8 @@
+AHCI and SATA drives:
+- SATA is the physical connector/connection, AHCI is the protocol. They are generally used on old optical disk and SSD.
+
+PCIe and NVMe drives:
+- PCIe is the physical connector/connection, NVMe is the procotol. They are generally used on recent SSD. PCIe is also used for a lot of others hardware that needs speed, as 
+its directly connected to the CPU, for example GPU use it.
+
+- https://unix.stackexchange.com/questions/4402/what-is-a-superblock-inode-dentry-and-a-file

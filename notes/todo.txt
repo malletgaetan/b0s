@@ -6,9 +6,12 @@ ENHANCEMENTS:
 - stack trace on panics
 - not fond of all the type casts, find your way
 - adjust KHEAP_START and KHEAP_STOP dynamically, or maybe just don't use them
+- remove all u64 u32 etc.. types and use the types created by the compiler
 
 FEATURES:
 - handle multiple cores
 - switch from VGA to frame buffer
 - make really easy to make program that draw things to screen
 - ANSI console && printk shouldn't depend on VGA
+- USB driver would be really cool
+- NVMe driver lol, base spec is 700 pages

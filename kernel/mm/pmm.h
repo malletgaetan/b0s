@@ -20,7 +20,7 @@ enum pmm_region_type {
 // don't know if it will become a problem but prefer to keep things as simple as 
 // possible until I found out why it was a bad idea.
 struct pmm_region {
-	void 					*addr;
+	void					*addr;
 	u64						size_in_pages;
 	enum pmm_region_type	type;
 	union {
