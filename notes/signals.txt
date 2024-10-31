@@ -1,0 +1,12 @@
+Signals are a bit tricky, but here's how it can be implemented:
+
+- userspace program call kill() with a pid
+- kernelspace find the process, and set the bit in the pending_signals bitmap of said process
+- before being scheduled, we'll check if the process have some pendings signals
+- if it does, then we will check if it is masked, if not continue
+- now we need to find the address of the handler function that should be stored in an array inside the process struct
+- once we got it, we'll make sure to not touch any values stored in the current process context, as its the values used by the userspace program, instead
+we'll use another context just for the handle of the signal, and we'll setup a values on the stack, that once popped should directly calls a syscall that tell
+the kernel space that we're done handling the signal and we can go one with normal execution.
+
+NOTES: it seems a bit wastefule to have to go back into kernel space to actually just re go in userspace right after

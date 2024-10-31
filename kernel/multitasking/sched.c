@@ -6,27 +6,13 @@
 
 static struct process *scheduled_procs = NULL;
 
+static struct list_head scheduled_procs = LIST_HEAD_INIT(scheduled_procs);
+
 static struct process *running = NULL;
 
 void sched_init(struct process *proc) {
+	list_add(&proc->sched_list, &scheduled_procs);
 	running = proc;
-	scheduled_procs = proc;
-}
-
-void sched_add_process(struct process *proc) {
-	scheduled_procs->next = proc;
-	scheduled_procs = proc;
-}
-
-void sched_remove_process(struct process *proc) {
-	struct process **cur = &scheduled_procs; // linus be proud
-
-	while (*cur != proc) {
-		if (*cur == NULL)
-			return ;
-		cur = &((*cur)->next);
-	}
-	*cur = (*cur)->next;
 }
 
 void sched_switch(void) {

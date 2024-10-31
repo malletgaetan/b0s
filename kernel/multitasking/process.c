@@ -13,14 +13,14 @@ static struct bitmap pid_bitmap;
 
 static u16 process_get_unused_pid(void) {
 	u16 pid = (u16)bitmap_find_and_set(&pid_bitmap);
-	if (pid == 0)
+	if (pid == 0) // NOTE: for the moment bitmap doesn't return 0 first, this will change
 		return process_get_unused_pid();
 	if (pid == pid_bitmap.len)
 		panic("%s: exhausted all PIDs", __func__); // NOTE: run a ripper ?
 	return pid;
 }
 
-struct process *process_create(char *name, u64 uentry) {
+struct process *process_create(char *name, struct process *parent, u64 uentry) {
 	struct process *proc = kmalloc(sizeof(struct process));
 	if (proc == NULL)
 		return NULL;
@@ -47,8 +47,18 @@ struct process *process_create(char *name, u64 uentry) {
 	memcpy(proc->name, name, name_len);
 	proc->name[name_len] = '\0';
 	proc->pid = process_get_unused_pid();
-	proc->next = NULL;
+	bitmap_init(&proc->fdbitmap, PROCESS_MAX_FD);
+	proc->sched_list = LIST_HEAD_INIT(proc->sched_list);
+	proc->childrens_list = LIST_HEAD_INIT(proc->childrens_list);
+	proc->siblings_list = LIST_HEAD_INIT(proc->siblings_list);
 	proc->state = PROCESS_READY;
+	proc->parent = parent;
+	if (parent != NULL && parent->child != NULL) {
+		list_add(&proc->siblings_list, parent->child);
+	} else {
+		parent->child = proc;
+	}
+	proc->child = NULL;
 	return proc;
 
 	fail_ustack:
@@ -73,6 +83,5 @@ void process_init(void) {
 	proc->tf = NULL; // will never be used
 	proc->state = PROCESS_RUNNING;
 	sched_init(proc);
-
 	bitmap_init_kheap(&pid_bitmap, U16_MAX);
 }

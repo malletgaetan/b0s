@@ -1,17 +1,23 @@
 #ifndef TESTER
-#include "kernel/mm/kheap.h"
-#include "kernel/lib/bitmap/bitmap.h"
-#include "kernel/lib/string/string.h"
-#include "kernel/lib/debug/debug.h"
-#include "kernel/lib/math/math.h"
+# include "kernel/mm/kheap.h"
+# include "kernel/lib/bitmap/bitmap.h"
+# include "kernel/lib/string/string.h"
+# include "kernel/lib/debug/debug.h"
+# include "kernel/lib/math/math.h"
 #endif
 
 // NOTES: set is 0, unset is 1
 
+void bitmap_init_static(struct bitmap *bm, u64 len) {
+	bm->len = len;
+	bm->size_in_block = BITMAP_SIZE_IN_BLOCK(len);
+	memset((u8 *)bm->bitmap, 0xff, bm->size_in_block * sizeof(u64));
+}
+
 // returns first unused address
 u64 *bitmap_init(struct bitmap *bm, u64 len, u64 *ptr) {
 	bm->len = len;
-	bm->size_in_block = (len / 64) + 1;
+	bm->size_in_block = BITMAP_SIZE_IN_BLOCK(len);
 	bm->bitmap = ptr;
 	memset((u8 *)bm->bitmap, 0xff, bm->size_in_block * sizeof(u64));
 	return (u64 *)((u64)ptr + bm->size_in_block);
@@ -19,7 +25,7 @@ u64 *bitmap_init(struct bitmap *bm, u64 len, u64 *ptr) {
 
 u64 *bitmap_init_kheap(struct bitmap *bm, u64 len) {
 	bm->len = len;
-	bm->size_in_block = (len / 64) + 1;
+	bm->size_in_block = BITMAP_SIZE_IN_BLOCK(len);
 	bm->bitmap = kmalloc(sizeof(u64) * bm->size_in_block);
 	if (bm->bitmap == NULL)
 		return NULL;

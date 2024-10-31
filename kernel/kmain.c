@@ -54,7 +54,7 @@ void schleeeeep(void) {
 
 struct process *create_init_process(void) {
 	u64 program_entry = (u64)0x1000;
-	struct process *init = process_create("init", program_entry);
+	struct process *init = process_create("init", program_entry, NULL);
 	if (init == NULL)
 		panic("%s: failed to create init process", __func__);
 	if (vmm_alloc_at(init->space, (void *)program_entry, 1, PAGE_USER_RO) == NULL)

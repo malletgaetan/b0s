@@ -1,3 +1,6 @@
+CRITICALS:
+- bitmap should returns values in growing order
+
 ENHANCEMENTS:
 - currently using a lot of double linked list, should implement a lib to handle all this, with some cool macros like https://litux.nl/mirror/kerneldevelopment/0672327201/app01lev1sec2.html
 - VMM shouldn't panic itself, returns errors, I like the functional way of doing it, so like Rust with a Result<Ok, Err>
