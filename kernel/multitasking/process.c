@@ -72,6 +72,8 @@ struct process *process_create(char *name, struct process *parent, u64 uentry) {
 
 // the boostrapping kernel stack is a process as the others and should be setup
 void process_init(void) {
+	ASSERT(PROCESS_NSIG <= ((struct process *)0)->masked_signals, "%s: too much possibilites of signals vs masked_signals bitmap\n", __func__);
+	ASSERT(PROCESS_NSIG <= ((struct process *)0)->pending_signals, "%s: too much possibilites of signals vs pending_signals bitmap\n", __func__);
 	struct process *proc = kmalloc(sizeof(struct process));
 	if (proc == NULL)
 		panic("%s: failed to init boot process");

@@ -20,8 +20,8 @@ static inline void INIT_LIST_HEAD(struct list_head *list) {
 
 static inline void __list_add(struct list_head *el, struct list_head *prev, struct list_head *next) {
     next->prev = el;
-    n->next = next;
-    n->prev = prev;
+    el->next = next;
+    el->prev = prev;
     prev->next = el;
 }
 
@@ -52,9 +52,11 @@ static inline int list_empty(const struct list_head *head) {
     const typeof(((type *)0)->member) *__mptr = (ptr); \
     (type *)((char *)__mptr - offsetof(type, member));})
 
-#define list_for_each(pos, head) \
-    for (struct list_head pos = (head)->next; pos != (head); pos = pos->next)
+// safe for read only
+#define list_for_each_ro(pos, head) \
+    for (pos = (head)->next; pos != (head); pos = pos->next)
 
+// safe for deleting element
 #define list_for_each_safe(pos, n, head) \
     for (pos = (head)->next, n = pos->next; pos != (head); \
         pos = n, n = pos->next)

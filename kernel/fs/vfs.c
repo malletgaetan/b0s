@@ -20,7 +20,7 @@ void vfs_umnt(struct vfs_mnt *mnt) {
 struct vfs_mnt *vfs_get_mnt(char *abspath) {
 	u64 max = 0;
 	struct vfs_mnt *tmp = NULL;
-	list_for_each(mnt, head) {
+	list_for_each_ro(mnt, head) {
 		u64 matchlen = strmatch(mnt->mountpoint, abspath);
 		if (matchlen > max)
 			tmp = mnt;

@@ -5,7 +5,7 @@
 struct bitmap {
 	u64	len;
 	u64	size_in_block;
-	u64	bitmap[];
+	u64	*bitmap;
 };
 
 # define BITMAP_SIZE_IN_BLOCK(len) ((len / 64) + 1)

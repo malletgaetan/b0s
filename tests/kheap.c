@@ -6,7 +6,6 @@
 #include <string.h>
 
 # define TESTER
-# undef NULL
 # define panic(...) assert(NULL)
 # define KERNEL_HEAP_START ((u64)0)
 # define KERNEL_HEAP_STOP ((u64)0)

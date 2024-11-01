@@ -4,7 +4,6 @@
 #include <string.h>
 
 # define TESTER
-# undef NULL
 # define kmalloc(x) malloc(x)
 
 #include "kernel/lib/math/math.h"
