@@ -47,9 +47,10 @@ static u8 read_tags(struct multiboot_tag *mb_infos) {
 
 // idle task
 void schleeeeep(void) {
-	sched_switch();
-	while (TRUE)
+	while (TRUE) {
+		sched_switch();
 		cpu_halt();
+	}
 }
 
 struct process *create_init_process(void) {
@@ -90,8 +91,8 @@ int kmain(u32 magic, void *mb_infos_ptr) {
 	interrupts_init();
 
 	process_init(); // set current
-	struct process *init = create_init_process();
-	sched_add_process(init);
+	// struct process *init = create_init_process();
+	// sched_add(init);
 
 	sched_start();
 	schleeeeep();

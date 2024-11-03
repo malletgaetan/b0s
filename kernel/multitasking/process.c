@@ -13,14 +13,12 @@ static struct bitmap pid_bitmap;
 
 static u16 process_get_unused_pid(void) {
 	u16 pid = (u16)bitmap_find_and_set(&pid_bitmap);
-	if (pid == 0) // NOTE: for the moment bitmap doesn't return 0 first, this will change
-		return process_get_unused_pid();
 	if (pid == pid_bitmap.len)
 		panic("%s: exhausted all PIDs", __func__); // NOTE: run a ripper ?
 	return pid;
 }
 
-struct process *process_create(char *name, struct process *parent, u64 uentry) {
+struct process	*process_create(char *name, u64 uentry, struct process *parent) {
 	struct process *proc = kmalloc(sizeof(struct process));
 	if (proc == NULL)
 		return NULL;
@@ -38,7 +36,7 @@ struct process *process_create(char *name, struct process *parent, u64 uentry) {
 	#ifdef DEBUG
 	mmu_test_compare_mapping(kspace, proc->space);
 	#endif
-	u64 ustack = (u64)vmm_alloc_at(proc->space, (void *)0xf000, (u64)8, PAGE_USER_RW);
+	void *ustack = vmm_alloc_at(proc->space, (void *)0xf000, (u64)8, PAGE_USER_RW);
 	if (ustack == NULL)
 		goto fail_ustack;
 
@@ -47,18 +45,18 @@ struct process *process_create(char *name, struct process *parent, u64 uentry) {
 	memcpy(proc->name, name, name_len);
 	proc->name[name_len] = '\0';
 	proc->pid = process_get_unused_pid();
-	bitmap_init(&proc->fdbitmap, PROCESS_MAX_FD);
+	bitmap_init_static((struct bitmap *)&proc->fdbitmap, PROCESS_MAX_FD);
 	proc->sched_list = LIST_HEAD_INIT(proc->sched_list);
-	proc->childrens_list = LIST_HEAD_INIT(proc->childrens_list);
 	proc->siblings_list = LIST_HEAD_INIT(proc->siblings_list);
 	proc->state = PROCESS_READY;
 	proc->parent = parent;
 	if (parent != NULL && parent->child != NULL) {
-		list_add(&proc->siblings_list, parent->child);
+		list_add(&proc->siblings_list, &parent->child->siblings_list);
 	} else {
 		parent->child = proc;
 	}
 	proc->child = NULL;
+	memset(proc->signals_handlers, 0, sizeof(void *) * PROCESS_NSIG);
 	return proc;
 
 	fail_ustack:
@@ -80,8 +78,8 @@ void process_init(void) {
 	char name[] = "BOOTSTRAP PROCESS";
 	proc->space = kspace;
 	proc->pid = 0;
+	proc->sched_list = LIST_HEAD_INIT(proc->sched_list);
 	memcpy(proc->name, name, sizeof(name));
-	proc->next = NULL;
 	proc->tf = NULL; // will never be used
 	proc->state = PROCESS_RUNNING;
 	sched_init(proc);

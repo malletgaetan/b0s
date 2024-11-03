@@ -25,16 +25,18 @@ u64 interrupt_handler(u64 rsp) {
 
 	switch (state->vector_number) {
 		case IDT_TIMER_INT: // preempt
-			cli();
+			cli(); // don't need sti() as it should come back to enable when in userspace (set by iretq)
 			sched_switch(); // after this point, don't trust what's on the stack
-			sti();
+			break ;
+		case IDT_SYSCALL_INT:
+			syscall(state);
 			break ;
 		case IDT_PAGE_FAULT: // page fault
 			// TODO: if userspace -> kill else panic
 			printk("PAGE FAULT:");
 			printk("error occured at %p\n", state->rip);
 			printk("error code %b\n", state->error_code);
-			panic("look at at the CR2 reigister value to found out which address caused the page fault");
+			panic("look at at the CR2 register value to found out which address caused the page fault");
 			break ;
 		case IDT_SPURIOUS_INT:
 			break ;

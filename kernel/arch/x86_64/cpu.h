@@ -44,5 +44,13 @@ static inline void cpu_halt(void) {
 	__asm__ volatile ("hlt");
 }
 
+static inline void cpu_int_off(void) {
+	cli();
+}
+
+static inline void cpu_int_on(void) {
+	sti();
+}
+
 
 #endif

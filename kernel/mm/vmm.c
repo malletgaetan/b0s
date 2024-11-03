@@ -266,6 +266,7 @@ void vmm_remove_range(struct vmm_space *space, void *va_start, void *va_stop) {
 	vmm_add_range(space, va_stop, region_va_stop, flags);
 }
 
+// TODO: redesign the va_start and va_stop of a vmm space
 struct vmm_space *vmm_create_space(void *va_start, void *va_stop) {
 	struct vmm_space *space = block_alloc(TYPE_VMM_SPACE);
 	space->region = NULL;

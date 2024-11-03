@@ -1,8 +1,9 @@
 #ifndef ARCH_PROCESS_H
 # define ARCH_PROCESS_H
 # include "kernel/types.h"
-# include "kernel/vfs/vfs.h"
+# include "kernel/fs/vfs.h"
 # include "kernel/multitasking/process.h"
+# include "kernel/lib/bitmap/bitmap.h"
 
 // TODO: find a better way to organize part of process that should only be visible to arch, and part that should be visible by all parts of OS
 struct process {
@@ -17,12 +18,13 @@ struct process {
 	struct process					*child;
 	struct fdesc					fds[PROCESS_MAX_FD];
 	BITMAP_STATIC(PROCESS_MAX_FD)	fdbitmap;
-	u32								masked_signals;
-	u32								pending_signals;
+	u64								masked_signals;
+	u64								pending_signals;
 	u64								signals_handlers[PROCESS_NSIG];
 	// arch part
 	u8								*kstack;
 	struct trap_frame				*tf; // pointer to kstack, used for switch between user and kernel space
+	struct trap_frame				saved_tf; // used to save tf out of user stack
 	struct context					*context; // pointer to kstack, used for switch between tasks
 };
 

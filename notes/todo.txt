@@ -1,5 +1,5 @@
 CRITICALS:
-- bitmap should returns values in growing order
+- bitmap should returns values in growing order [OK]
 
 ENHANCEMENTS:
 - currently using a lot of double linked list, should implement a lib to handle all this, with some cool macros like https://litux.nl/mirror/kerneldevelopment/0672327201/app01lev1sec2.html
@@ -10,6 +10,7 @@ ENHANCEMENTS:
 - not fond of all the type casts, find your way
 - adjust KHEAP_START and KHEAP_STOP dynamically, or maybe just don't use them
 - remove all u64 u32 etc.. types and use the types created by the compiler
+- replace all specific linked list implementation (kheap for examples) and use kernel/lib/list
 
 FEATURES:
 - handle multiple cores

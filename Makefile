@@ -23,6 +23,7 @@ C_SRCS = kernel/kmain.c \
 		 kernel/lib/string/memset.c \
 		 kernel/lib/string/memcmp.c \
 		 kernel/lib/string/memcpy.c \
+		 kernel/lib/string/strmatch.c \
 		 kernel/lib/bitmap/bitmap.c \
 		 kernel/mm/pmm.c \
 		 kernel/mm/vmm.c \
@@ -73,6 +74,7 @@ $(EXTENDED_SCRIPT): kernel.ld
 clean:
 	find . -name *.o -type f -delete
 	find . -name *.O -type f -delete
+	rm -f vgcore.*
 	rm -f $(EXTENDED_SCRIPT)
 	rm -f $(ELF)
 	rm -f $(NAME)

@@ -41,9 +41,9 @@ u64 bitmap_find_and_set(struct bitmap *bm) {
 		if (bm->bitmap[i] == 0)
 			continue ;
 
-		bit_set_index = (u64)__builtin_ffsll(bm->bitmap[i]);
-		bm->bitmap[i] &= ~((u64)1 << (bit_set_index - 1));
-		index = ((i * 64) + (bit_set_index - 1));
+		bit_set_index = (u64)__builtin_clzll(bm->bitmap[i]);
+		bm->bitmap[i] &= ~((u64)1 << (63 - bit_set_index));
+		index = ((i * 64) + bit_set_index);
 		break ;
 	}
 	return MIN(index, bm->len);
@@ -54,5 +54,5 @@ void bitmap_unset(struct bitmap *bm, u64 i) {
 		return ;
 	u64 j = i / 64;
 	u64 bit_set_index = i % 64;
-	bm->bitmap[j] |= 1 << bit_set_index;
+	bm->bitmap[j] |= 1 << (63 - bit_set_index);
 }

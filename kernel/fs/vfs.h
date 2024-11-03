@@ -5,6 +5,8 @@
 # define VFS_PATH_LENGTH 4096
 # define VFS_FILE_LENGTH VFS_PATH_LENGTH
 
+# include "kernel/lib/list/list.h"
+
 // TODO: how should we let userspace get theses values?
 // O_RDONLY it opens a file in read only mode
 // O_RDWR it opens a file for reading and writing
