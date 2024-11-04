@@ -1,26 +1,27 @@
-#include "kernel/types.h"
 #include "kernel/cpu.h"
+#include "kernel/drivers/acpi/acpi.h"
+#include "kernel/drivers/vga/vga.h" // NOOO
+#include "kernel/interrupts.h"
+#include "kernel/mm/kheap.h"
 #include "kernel/mm/layout.h"
 #include "kernel/mm/paging.h"
-#include "kernel/mm/kheap.h"
 #include "kernel/mm/pmm.h"
 #include "kernel/mm/vmm.h"
-#include "kernel/interrupts.h"
-#include "kernel/drivers/acpi/acpi.h"
 #include "kernel/multiboot2.h"
 #include "kernel/multitasking/process.h"
 #include "kernel/multitasking/sched.h"
-#include "kernel/drivers/vga/vga.h" // NOOO
+#include "kernel/types.h"
 
 #include "kernel/lib/debug/debug.h"
+#include "kernel/lib/math/math.h"
 #include "kernel/lib/printk/printk.h"
 #include "kernel/lib/string/string.h"
-#include "kernel/lib/math/math.h"
 
 const struct acpi_rsdp *rsdp = NULL;
 const struct multiboot_tag_mmap *mmap = NULL;
 
-static u8 read_tags(struct multiboot_tag *mb_infos) {
+static u8 read_tags(struct multiboot_tag *mb_infos)
+{
 	u64 size = *((u32 *)mb_infos);
 	u32 bitmap = 0;
 	u32 expected_bitmap = ((1 << MULTIBOOT_TAG_TYPE_ACPI_OLD) | (1 << MULTIBOOT_TAG_TYPE_MMAP));
@@ -29,14 +30,14 @@ static u8 read_tags(struct multiboot_tag *mb_infos) {
 	while (tag < mb_infos + (u64)size) {
 		bitmap |= (1 << tag->type);
 		switch (tag->type) {
-			case MULTIBOOT_TAG_TYPE_ACPI_OLD:
-				rsdp = (struct acpi_rsdp *)P2V(((struct multiboot_tag_old_acpi *)tag)->rsdp);
-				break;
-			case MULTIBOOT_TAG_TYPE_MMAP:
-				mmap = (struct multiboot_tag_mmap *)P2V(tag);
-				break;
-			default:
-				break;
+		case MULTIBOOT_TAG_TYPE_ACPI_OLD:
+			rsdp = (struct acpi_rsdp *)P2V(((struct multiboot_tag_old_acpi *)tag)->rsdp);
+			break;
+		case MULTIBOOT_TAG_TYPE_MMAP:
+			mmap = (struct multiboot_tag_mmap *)P2V(tag);
+			break;
+		default:
+			break;
 		}
 		if (tag->type == MULTIBOOT_TAG_TYPE_END)
 			break;
@@ -46,14 +47,16 @@ static u8 read_tags(struct multiboot_tag *mb_infos) {
 }
 
 // idle task
-void schleeeeep(void) {
+void schleeeeep(void)
+{
 	while (TRUE) {
 		sched_switch();
 		cpu_halt();
 	}
 }
 
-struct process *create_init_process(void) {
+struct process *create_init_process(void)
+{
 	u64 program_entry = (u64)0x1000;
 	struct process *init = process_create("init", program_entry, NULL);
 	if (init == NULL)
@@ -69,7 +72,8 @@ struct process *create_init_process(void) {
 	return init;
 }
 
-int kmain(u32 magic, void *mb_infos_ptr) {
+int kmain(u32 magic, void *mb_infos_ptr)
+{
 	vga_reset(); // TODO: shouldn't rely on pure driver here, should abstract console
 
 	// TODO: put mb_infos_ptr to virtual address space
@@ -83,7 +87,8 @@ int kmain(u32 magic, void *mb_infos_ptr) {
 
 	interrupts_entry_init();
 
-	u64 available_pages = pmm_init(mmap); printk("kernel: %u MiB available\n", BYTE2MB(available_pages * PAGE_SIZE_IN_BYTES));
+	u64 available_pages = pmm_init(mmap);
+	printk("kernel: %u MiB available\n", BYTE2MB(available_pages * PAGE_SIZE_IN_BYTES));
 	vmm_init();
 	kheap_init(1);
 

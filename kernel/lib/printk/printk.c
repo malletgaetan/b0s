@@ -1,14 +1,18 @@
-#include "kernel/drivers/vga/vga.h"// TODO: a lib shouldn't rely on a specific driver implementation
-#include "kernel/types.h"
 #include "kernel/lib/printk/printk.h"
+#include "kernel/drivers/vga/vga.h" // TODO: a lib shouldn't rely on a specific driver implementation
+#include "kernel/types.h"
 
-# define HEX_ALPHA "0123456789abcdef"
+#define HEX_ALPHA "0123456789abcdef"
 
-# define LOG_LOOKUP (u8[]){64, 41, 32, 28, 25, 23, 22, 21, 20, 19, 18, 18, 17, 17, 16} // logx(2^64)
-# define U64_MAX_LOG_BASE(base) (LOG_LOOKUP[base - 2])
+#define LOG_LOOKUP                                                 \
+	(u8[])                                                         \
+	{                                                              \
+		64, 41, 32, 28, 25, 23, 22, 21, 20, 19, 18, 18, 17, 17, 16 \
+	} // logx(2^64)
+#define U64_MAX_LOG_BASE(base) (LOG_LOOKUP[base - 2])
 
-
-static void putnbr(u64 nbr, u8 base) {
+static void putnbr(u64 nbr, u8 base)
+{
 	u8 log = U64_MAX_LOG_BASE(base);
 	char array[log];
 
@@ -24,7 +28,8 @@ static void putnbr(u64 nbr, u8 base) {
 		vga_putchar(array[i++], VGA_WHITE);
 }
 
-static void putptr(u64 ptr) {
+static void putptr(u64 ptr)
+{
 	vga_putchar('0', VGA_WHITE);
 	vga_putchar('x', VGA_WHITE);
 
@@ -43,7 +48,8 @@ static void putptr(u64 ptr) {
 		vga_putchar(array[i++], VGA_WHITE);
 }
 
-static void putstr(char *str) {
+static void putstr(char *str)
+{
 	while (*str)
 		vga_putchar(*(str++), VGA_WHITE);
 }
@@ -81,14 +87,16 @@ static void interpret(const char *format, va_list *args)
 	while (TRUE) {
 		while (*format != '%') {
 			if ((*format) == '\0')
-				return ;
+				return;
 			if ((*format) == '\n') {
 				vga_pad();
 				// vga_newline();
 				format++;
 				continue;
 			}
-			vga_putchar(*format, VGA_WHITE); // TODO: a lib shouldn't rely on a specific driver implementation
+			vga_putchar(
+				*format,
+				VGA_WHITE); // TODO: a lib shouldn't rely on a specific driver implementation
 			format++;
 		}
 		format += print_arg(*(format + 1), args);
@@ -98,7 +106,7 @@ static void interpret(const char *format, va_list *args)
 void _printk(const char *format, va_list *args)
 {
 	if (!format)
-		return ;
+		return;
 	interpret(format, args);
 }
 

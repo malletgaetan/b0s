@@ -1,16 +1,17 @@
-#include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-# define TESTER
-# define kmalloc(x) malloc(x)
+#define TESTER
+#define kmalloc(x) malloc(x)
 
-#include "kernel/lib/math/math.h"
-#include "kernel/lib/bitmap/bitmap.h"
 #include "kernel/lib/bitmap/bitmap.c"
+#include "kernel/lib/bitmap/bitmap.h"
+#include "kernel/lib/math/math.h"
 
-int main(void) {
+int main(void)
+{
 	for (u64 size = 1; size < 5777; size++) {
 		u64 bitmap_size_in_bytes = ((size / 64) + 1) * sizeof(u64) + 1;
 		u64 *ptr = malloc(bitmap_size_in_bytes);
@@ -18,7 +19,8 @@ int main(void) {
 		memset(ptr, 0, bitmap_size_in_bytes);
 		memset(array, 0, size);
 		struct bitmap bm;
-		assert(((void *)bitmap_init(&bm, size, ptr) < (void *)((u64)ptr + bitmap_size_in_bytes)) && "bitmap buffer overflow 1");
+		assert(((void *)bitmap_init(&bm, size, ptr) < (void *)((u64)ptr + bitmap_size_in_bytes)) &&
+			   "bitmap buffer overflow 1");
 		assert(((u8 *)ptr)[bitmap_size_in_bytes - 1] == 0 && "bitmap buffer overflow 2");
 		u64 index;
 		u64 alloc = 0;
@@ -26,7 +28,7 @@ int main(void) {
 		while (TRUE) {
 			index = bitmap_find_and_set(&bm);
 			if (index == bm.len)
-				break ;
+				break;
 			alloc++;
 			assert(array[index] == 0 && "bitmap return twice the same place");
 			array[index] = 1;
@@ -49,7 +51,7 @@ int main(void) {
 		while (TRUE) {
 			index = bitmap_find_and_set(&bm);
 			if (index == bm.len)
-				break ;
+				break;
 			alloc++;
 			assert(array[index] == 0 && "bitmap return twice the same place | realloc");
 			array[index] = 1;

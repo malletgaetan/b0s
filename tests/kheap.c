@@ -1,33 +1,36 @@
-#include <sys/mman.h>
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <time.h>
 
-# define TESTER
-# define panic(...) assert(NULL)
-# define KERNEL_HEAP_START ((u64)0)
-# define KERNEL_HEAP_STOP ((u64)0)
+#define TESTER
+#define panic(...) assert(NULL)
+#define KERNEL_HEAP_START ((u64)0)
+#define KERNEL_HEAP_STOP ((u64)0)
 
-#include "kernel/types.h"
 #include "kernel/lib/math/math.h"
 #include "kernel/mm/paging.h"
+#include "kernel/types.h"
 
 struct vmm_space;
 
 struct vmm_space *kspace = NULL;
 
-void *vmm_alloc_between(struct vmm_space *space, void *lower_va, void *upper_va, u64 size_in_pages, u64 flags);
+void *vmm_alloc_between(struct vmm_space *space, void *lower_va, void *upper_va, u64 size_in_pages,
+						u64 flags);
 void vmm_free(struct vmm_space *space, void *va, u64 size_in_pages);
 
-#include "kernel/mm/kheap.h"
 #include "kernel/mm/kheap.c"
+#include "kernel/mm/kheap.h"
 
 u64 total_vmm_allocated = 0;
 u64 total_vmm_freed = 0;
 
-void *vmm_alloc_between(struct vmm_space *space, void *lower_va, void *upper_va, u64 size_in_pages, u64 flags) {
+void *vmm_alloc_between(struct vmm_space *space, void *lower_va, void *upper_va, u64 size_in_pages,
+						u64 flags)
+{
 	(void)space;
 	(void)lower_va;
 	(void)upper_va;
@@ -36,18 +39,20 @@ void *vmm_alloc_between(struct vmm_space *space, void *lower_va, void *upper_va,
 	return malloc(size_in_pages * PAGE_SIZE_IN_BYTES); // backing with malloc for valgrind debug
 }
 
-void vmm_free(struct vmm_space *space, void *va, u64 size_in_pages) {
+void vmm_free(struct vmm_space *space, void *va, u64 size_in_pages)
+{
 	(void)space;
 	total_vmm_freed += size_in_pages;
 	free(va);
 }
 
-
-int random_range(int min, int max) {
+int random_range(int min, int max)
+{
 	return min + rand() % (max - min + 1);
 }
 
-int *random_array(int size) {
+int *random_array(int size)
+{
 	int *array = malloc(size * sizeof(int));
 	assert(array != NULL);
 	srand(time(NULL));
@@ -59,7 +64,8 @@ int *random_array(int size) {
 	return array;
 }
 
-void stress_test(void) {
+void stress_test(void)
+{
 	for (u64 nb_allocs = 100; nb_allocs < 5000; nb_allocs += 7) {
 		int *alloc_array = random_array(nb_allocs);
 		void **ptr_array = malloc(nb_allocs * sizeof(void *));
@@ -81,7 +87,7 @@ void stress_test(void) {
 			assert(IS_ALIGNED(ptr_array[i], KHEAP_ALIGN_IN_BYTES));
 			memset(ptr_array[i], 0xff, alloc_array[i]); // try to corrupt
 		}
-		for (u64 i = 0; i < nb_allocs ; i++) {
+		for (u64 i = 0; i < nb_allocs; i++) {
 			kfree(ptr_array[i]);
 		}
 		assert(total_vmm_allocated == total_vmm_freed);
@@ -90,14 +96,16 @@ void stress_test(void) {
 	}
 }
 
-void big_alloc_test(void) {
+void big_alloc_test(void)
+{
 	void *ptr = kmalloc(65536); // really big stack
 	assert(ptr != NULL);
 	memset(ptr, 0xff, 65536); // try to corrupt
 	kfree(ptr);
 }
 
-int main(void) {
+int main(void)
+{
 	kheap_init(1);
 	stress_test();
 	big_alloc_test();

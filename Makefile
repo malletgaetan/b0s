@@ -118,4 +118,7 @@ test-%:
 	fi
 	@rm -f ./tests/$*
 
-.PHONY: clean run run-gdb re debug tests
+fmt:
+	@find . \( -name '*.c' -o -name '*.h' \) -exec clang-format -i {} \;
+
+.PHONY: clean run run-gdb re debug tests fmt

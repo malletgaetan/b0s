@@ -1,10 +1,10 @@
 #ifndef VGA_H
-# include "kernel/types.h"
-# include "kernel/mm/layout.h"
-# define VGA_H
-# define VGA_BUFFER_ADDRESS (P2V(0xB8000)) // TODO: beware! this should be in the higher half mapping
-# define VGA_WIDTH 80
-# define VGA_HEIGHT 25
+#include "kernel/mm/layout.h"
+#include "kernel/types.h"
+#define VGA_H
+#define VGA_BUFFER_ADDRESS (P2V(0xB8000)) // TODO: beware! this should be in the higher half mapping
+#define VGA_WIDTH 80
+#define VGA_HEIGHT 25
 
 enum vga_color {
 	VGA_BLACK = 0,
@@ -25,9 +25,9 @@ enum vga_color {
 	VGA_WHITE = 15,
 };
 
-void	vga_reset(void);
-void	vga_newline(void);
-void	vga_putchar(char c, u8 color);
-void	vga_pad(void);
+void vga_reset(void);
+void vga_newline(void);
+void vga_putchar(char c, u8 color);
+void vga_pad(void);
 
 #endif

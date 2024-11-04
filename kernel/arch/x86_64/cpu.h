@@ -1,15 +1,15 @@
 #ifndef ARCH_CPU_H
-# define ARCH_CPU_H
+#define ARCH_CPU_H
 
 #include "kernel/types.h"
 
 struct context {
-	u64	r12;
-	u64	r13;
-	u64	r14;
-	u64	r15;
-	u64	rbp;
-	u64	rbx;
+	u64 r12;
+	u64 r13;
+	u64 r14;
+	u64 r15;
+	u64 rbp;
+	u64 rbx;
 	u64 rip;
 } __attribute__((__packed__));
 
@@ -40,17 +40,19 @@ struct trap_frame {
 	u64 ss;
 } __attribute__((__packed__));
 
-static inline void cpu_halt(void) {
-	__asm__ volatile ("hlt");
+static inline void cpu_halt(void)
+{
+	__asm__ volatile("hlt");
 }
 
-static inline void cpu_int_off(void) {
+static inline void cpu_int_off(void)
+{
 	cli();
 }
 
-static inline void cpu_int_on(void) {
+static inline void cpu_int_on(void)
+{
 	sti();
 }
-
 
 #endif

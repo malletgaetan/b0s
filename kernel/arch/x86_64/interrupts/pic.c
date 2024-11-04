@@ -1,8 +1,9 @@
-#include "kernel/arch/x86_64/asm.h"
 #include "kernel/arch/x86_64/interrupts/pic.h"
+#include "kernel/arch/x86_64/asm.h"
 
 // from https://github.com/dreamportdev/Osdev-Notes/blob/master/02_Architecture/07_APIC.md
-void pic_disable(void) {
+void pic_disable(void)
+{
 	outb(PIC_COMMAND_MASTER, ICW_1);
 	outb(PIC_COMMAND_SLAVE, ICW_1);
 	outb(PIC_DATA_MASTER, ICW_2_M);

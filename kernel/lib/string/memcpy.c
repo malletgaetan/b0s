@@ -6,8 +6,7 @@ void *memcpy(void *dst, const void *src, u64 n)
 
 	if (!dst && !src)
 		return (NULL);
-	while (i < n)
-	{
+	while (i < n) {
 		((u8 *)(dst))[i] = ((u8 *)src)[i];
 		i++;
 	}

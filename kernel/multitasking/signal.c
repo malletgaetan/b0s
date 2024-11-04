@@ -1,7 +1,8 @@
 // signal.c
 #include "kernel/multitasking/signal.h"
 
-i32 signal_send(struct process *proc, u64 signum) {
+i32 signal_send(struct process *proc, u64 signum)
+{
 	if (signum < 0 || signum >= PROCESS_NSIG)
 		return -EINVAL;
 
@@ -12,7 +13,8 @@ i32 signal_send(struct process *proc, u64 signum) {
 	return 0;
 }
 
-void signal_deliver(struct process *proc) {
+void signal_deliver(struct process *proc)
+{
 	if (proc->pending_signals == 0)
 		return;
 
@@ -24,22 +26,24 @@ void signal_deliver(struct process *proc) {
 
 	SIGNAL_UNSET(proc->pending_signals, signum);
 
-	void (*handler)(u64) = (void (*)(u64))proc->signals_handlers[signum]; // userspace function pointer - to be executed in userspace ONLY
+	void (*handler)(u64) =
+		(void (*)(u64))proc->signals_handlers[signum]; // userspace function pointer - to be
+													   // executed in userspace ONLY
 
 	if (handler == NULL || signum == SIGKILL) {
 		switch (signum) {
-			case SIGSEGV:
-			case SIGKILL:
-				// TODO: how do we kill a process hehe
-				// TODO: init process (pid 1) shouldn't be killable?
-				break;
-			case SIGSTOP:
-				proc->state = PROCESS_STOPPED;
-				break;
-			case SIGCONT:
-				if (proc->state == PROCESS_STOPPED)
-					proc->state = PROCESS_READY;
-				break;
+		case SIGSEGV:
+		case SIGKILL:
+			// TODO: how do we kill a process hehe
+			// TODO: init process (pid 1) shouldn't be killable?
+			break;
+		case SIGSTOP:
+			proc->state = PROCESS_STOPPED;
+			break;
+		case SIGCONT:
+			if (proc->state == PROCESS_STOPPED)
+				proc->state = PROCESS_READY;
+			break;
 		}
 		return;
 	}

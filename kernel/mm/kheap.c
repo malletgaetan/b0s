@@ -1,43 +1,46 @@
 #ifndef TESTER
 #include "kernel/mm/kheap.h"
-#include "kernel/mm/vmm.h"
-#include "kernel/mm/paging.h"
 #include "kernel/mm/layout.h"
+#include "kernel/mm/paging.h"
+#include "kernel/mm/vmm.h"
 
 #include "kernel/lib/debug/debug.h"
 #endif
 
 #include "kernel/lib/math/math.h"
 
-// TODO: align heap allocations in all allocators: just learned about alignment impact on performance, did not tested it, but it could be nice to impl and compare: https://en.wikipedia.org/wiki/Data_structure_alignment
+// TODO: align heap allocations in all allocators: just learned about alignment impact on
+// performance, did not tested it, but it could be nice to impl and compare:
+// https://en.wikipedia.org/wiki/Data_structure_alignment
 
 struct block;
 
 struct container {
-	u64 				size_in_bytes;
-	u64					used_blocks;
-	struct container	*prev; // hmh maybe we do not need this one
-	struct container	*next;
-	struct block 		*block;
+	u64 size_in_bytes;
+	u64 used_blocks;
+	struct container *prev; // hmh maybe we do not need this one
+	struct container *next;
+	struct block *block;
 };
 
 struct block {
-	u64					size_in_bytes;
-	u8					used;
-	struct block		*prev;
-	struct block		*next;
-	struct container	*container;
+	u64 size_in_bytes;
+	u8 used;
+	struct block *prev;
+	struct block *next;
+	struct container *container;
 };
 
-# define BLOCK_DATA(x) ((void *)((u64)x + sizeof(struct block)))
-# define DATA_BLOCK(x) ((struct block *)((u64)x - sizeof(struct block)))
+#define BLOCK_DATA(x) ((void *)((u64)x + sizeof(struct block)))
+#define DATA_BLOCK(x) ((struct block *)((u64)x - sizeof(struct block)))
 
-# define CONTAINER_DATA(x) ((void *)((u64)x + sizeof(struct container)))
-# define DATA_CONTAINER(x) ((struct block *)((u64)x - sizeof(struct container)))
+#define CONTAINER_DATA(x) ((void *)((u64)x + sizeof(struct container)))
+#define DATA_CONTAINER(x) ((struct block *)((u64)x - sizeof(struct container)))
 
 static struct container *heap = NULL;
 
-static struct block *try_alloc_block(struct container *container, u64 size_in_bytes) {
+static struct block *try_alloc_block(struct container *container, u64 size_in_bytes)
+{
 	struct block *b = container->block;
 
 	while (b != NULL) {
@@ -46,14 +49,15 @@ static struct block *try_alloc_block(struct container *container, u64 size_in_by
 		b = b->next;
 	}
 	return NULL;
-	found_block:
+found_block:
 	b->used = TRUE;
 	b->container->used_blocks++;
 
 	u64 block_end = (u64)BLOCK_DATA(b) + b->size_in_bytes;
 	u64 block_end_after_alloc = (u64)BLOCK_DATA(b) + size_in_bytes;
 
-	u64 next_block_struct_end = (u64)ROUNDUP(block_end_after_alloc + sizeof(struct block), KHEAP_ALIGN_IN_BYTES);
+	u64 next_block_struct_end =
+		(u64)ROUNDUP(block_end_after_alloc + sizeof(struct block), KHEAP_ALIGN_IN_BYTES);
 	u64 next_block = next_block_struct_end - sizeof(struct block);
 
 	// not enough size to split the block, just return it
@@ -76,9 +80,11 @@ static struct block *try_alloc_block(struct container *container, u64 size_in_by
 	return b;
 }
 
-static struct container *create_container(u64 size_in_pages) {
+static struct container *create_container(u64 size_in_pages)
+{
 	size_in_pages = MAX(KHEAP_MIN_ALLOC_IN_PAGES, size_in_pages);
-	struct container *c = (struct container *)vmm_alloc_between(kspace, (void *)KERNEL_HEAP_START, (void *)KERNEL_HEAP_STOP, size_in_pages, PAGE_KERNEL_RW);
+	struct container *c = (struct container *)vmm_alloc_between(
+		kspace, (void *)KERNEL_HEAP_START, (void *)KERNEL_HEAP_STOP, size_in_pages, PAGE_KERNEL_RW);
 	if (c == NULL)
 		return NULL;
 
@@ -101,7 +107,8 @@ static struct container *create_container(u64 size_in_pages) {
 	return c;
 }
 
-static void remove_container(struct container *container) {
+static void remove_container(struct container *container)
+{
 	if (container->prev == NULL)
 		heap = container->next;
 	else
@@ -110,15 +117,18 @@ static void remove_container(struct container *container) {
 	if (container->next)
 		container->next->prev = container->prev;
 
-	vmm_free(kspace, (void *)container, (container->size_in_bytes + sizeof(struct container)) / PAGE_SIZE_IN_BYTES);
+	vmm_free(kspace, (void *)container,
+			 (container->size_in_bytes + sizeof(struct container)) / PAGE_SIZE_IN_BYTES);
 }
 
-void kheap_init(u64 size_in_pages) {
+void kheap_init(u64 size_in_pages)
+{
 	if (create_container(size_in_pages) == NULL)
 		panic("%s: failed to init kheap", __func__);
 }
 
-void *kmalloc(u64 size_in_bytes) {
+void *kmalloc(u64 size_in_bytes)
+{
 	struct container *c = (struct container *)heap;
 	struct block *b = NULL;
 	while (c != NULL) {
@@ -127,18 +137,20 @@ void *kmalloc(u64 size_in_bytes) {
 			goto block_found;
 		c = c->next;
 	}
-	c = create_container(((size_in_bytes + sizeof(struct block)) / PAGE_SIZE_IN_BYTES) + 2); // aggresively overallocate
+	c = create_container(((size_in_bytes + sizeof(struct block)) / PAGE_SIZE_IN_BYTES) +
+						 2); // aggresively overallocate
 	if (c == NULL)
 		return NULL;
 	b = try_alloc_block(c, size_in_bytes);
 	if (b == NULL)
 		panic("%s: the impossible is possible", __func__);
 
-	block_found:
+block_found:
 	return (void *)BLOCK_DATA(b);
 }
 
-void kfree(void *ptr) {
+void kfree(void *ptr)
+{
 	struct block *b = DATA_BLOCK(ptr);
 	u64 total_size = b->size_in_bytes + sizeof(struct block);
 	b->used = FALSE;

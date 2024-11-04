@@ -1,19 +1,15 @@
 #ifndef IDT_H
-# define IDT_H
+#define IDT_H
 
-# include "kernel/types.h"
+#include "kernel/types.h"
 
 #define IDT_SIZE 256
 
-# define VECTOR_PRESENT 0b10000000
-# define INT_GATE 0b1110
-# define TRAP_GATE 0b1111
+#define VECTOR_PRESENT 0b10000000
+#define INT_GATE 0b1110
+#define TRAP_GATE 0b1111
 
-enum {
-	IDT_USER = 0x60,
-	IDT_TRAP = 0xef,
-	IDT_GATE = 0x8e
-};
+enum { IDT_USER = 0x60, IDT_TRAP = 0xef, IDT_GATE = 0x8e };
 
 enum {
 	IDT_DIVIDE_BY_ZERO = 0,
@@ -48,8 +44,8 @@ enum {
 struct idt_entry {
 	u16 offset0_15;
 	u16 selector; // code segment
-	u8  ist;
-	u8  attributes;
+	u8 ist;
+	u8 attributes;
 	u16 offset16_31;
 	u32 offset32_63;
 	u32 zero;
@@ -60,6 +56,6 @@ struct idtr {
 	u64 base;
 } __attribute__((packed));
 
-void	idt_init(void);
-void	idt_debug_call(u8 vec);
+void idt_init(void);
+void idt_debug_call(u8 vec);
 #endif

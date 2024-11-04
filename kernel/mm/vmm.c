@@ -4,20 +4,16 @@
 #include "kernel/mm/paging.h"
 #include "kernel/mm/pmm.h"
 
-#include "kernel/lib/printk/printk.h"
-#include "kernel/lib/math/math.h"
-#include "kernel/lib/debug/debug.h"
 #include "kernel/lib/bitmap/bitmap.h"
+#include "kernel/lib/debug/debug.h"
+#include "kernel/lib/math/math.h"
+#include "kernel/lib/printk/printk.h"
 #endif
 
 void *kernel_dm_start; // set in vmm.c
-void *kernel_dm_stop; // set in vmm.c
+void *kernel_dm_stop;  // set in vmm.c
 
-enum struct_type {
-	TYPE_VMM_REGION,
-	TYPE_VMM_SPACE,
-	NUM_TYPES
-};
+enum struct_type { TYPE_VMM_REGION, TYPE_VMM_SPACE, NUM_TYPES };
 
 struct block *block_heads[NUM_TYPES] = {NULL};
 
@@ -30,48 +26,52 @@ struct vmm_space *kspace;
 // dramatic, for the moment we'll stay with simple solution will low chance of overflow.
 
 struct block {
-	void			*objects;
-	u64 			nb_used;
-	u64 			object_size_in_bytes;
-	u64 			max_objects;
-	struct bitmap	bm;
-	struct block 	*prev;
-	struct block 	*next;
+	void *objects;
+	u64 nb_used;
+	u64 object_size_in_bytes;
+	u64 max_objects;
+	struct bitmap bm;
+	struct block *prev;
+	struct block *next;
 };
 
-static u64 get_struct_size(enum struct_type type) {
+static u64 get_struct_size(enum struct_type type)
+{
 	switch (type) {
-		case TYPE_VMM_REGION:
-			return sizeof(struct vmm_region);
-		case TYPE_VMM_SPACE:
-			return sizeof(struct vmm_space);
-		default:
-			panic("%s: unknown type", __func__);
-			return 0;
+	case TYPE_VMM_REGION:
+		return sizeof(struct vmm_region);
+	case TYPE_VMM_SPACE:
+		return sizeof(struct vmm_space);
+	default:
+		panic("%s: unknown type", __func__);
+		return 0;
 	}
 }
 
-static struct block *create_block(enum struct_type type, struct block *prev) {
+static struct block *create_block(enum struct_type type, struct block *prev)
+{
 	struct block *new_block = (struct block *)DM_P2V(pmm_xalloc());
 
 	new_block->object_size_in_bytes = get_struct_size(type);
-	new_block->max_objects = (PAGE_SIZE_IN_BYTES - sizeof(struct block)) / (new_block->object_size_in_bytes + sizeof(u8));
+	new_block->max_objects = (PAGE_SIZE_IN_BYTES - sizeof(struct block)) /
+							 (new_block->object_size_in_bytes + sizeof(u8));
 	new_block->objects = (void *)((u64)new_block + sizeof(struct block));
 	new_block->prev = prev;
 	new_block->next = NULL;
-	void *last_used_map = bitmap_init(
-		&new_block->bm,
-		new_block->max_objects,
-		(void *)((u64)new_block->objects + (new_block->max_objects * new_block->object_size_in_bytes))
-	);
+	void *last_used_map =
+		bitmap_init(&new_block->bm, new_block->max_objects,
+					(void *)((u64)new_block->objects +
+							 (new_block->max_objects * new_block->object_size_in_bytes)));
 	(void)last_used_map;
 
-	ASSERT((u64)last_used_map < ((u64)new_block + PAGE_SIZE_IN_BYTES), "%s: block overflow in direct mapping", __func__);
+	ASSERT((u64)last_used_map < ((u64)new_block + PAGE_SIZE_IN_BYTES),
+		   "%s: block overflow in direct mapping", __func__);
 
 	return new_block;
 }
 
-static void *block_alloc(enum struct_type type) {
+static void *block_alloc(enum struct_type type)
+{
 	if (block_heads[type] == NULL)
 		block_heads[type] = create_block(type, NULL);
 
@@ -91,14 +91,18 @@ static void *block_alloc(enum struct_type type) {
 	return NULL;
 }
 
-static void block_free(void *ptr, enum struct_type type) {
+static void block_free(void *ptr, enum struct_type type)
+{
 	struct block *current = block_heads[type];
 	while (current != NULL) {
-		if ((u64)ptr < (u64)current->objects || (u64)ptr > ((u64)current->objects + (current->max_objects * current->object_size_in_bytes))) {
+		if ((u64)ptr < (u64)current->objects ||
+			(u64)ptr >
+				((u64)current->objects + (current->max_objects * current->object_size_in_bytes))) {
 			current = current->next;
-			continue ;
+			continue;
 		}
-		bitmap_unset(&current->bm, ((u64)ptr - (u64)current->objects) / current->object_size_in_bytes);
+		bitmap_unset(&current->bm,
+					 ((u64)ptr - (u64)current->objects) / current->object_size_in_bytes);
 		current->nb_used--;
 		if (current->nb_used == 0) {
 			if (current->prev != NULL)
@@ -107,7 +111,7 @@ static void block_free(void *ptr, enum struct_type type) {
 				current->next->prev = current->prev;
 			pmm_free(DM_V2P(current));
 		}
-		return ;
+		return;
 	}
 	panic("%s: freeing unknown pointer", __func__);
 }
@@ -115,19 +119,24 @@ static void block_free(void *ptr, enum struct_type type) {
 // STOP  Virtual Memory Manager Object Allocator ------
 
 #ifdef DEBUG
-static void vmm_probe_space(struct vmm_space *space) {
+static void vmm_probe_space(struct vmm_space *space)
+{
 	for (struct vmm_region *region = space->region; region != NULL; region = region->next) {
 		if (region->flags == PAGE_KERNEL_RO || region->flags == PAGE_USER_RO)
-			continue ;
+			continue;
 		u8 useless = 0;
-		for (u64 addr = (u64)region->va_start; addr < (u64)region->va_stop; addr += PAGE_SIZE_IN_BYTES)
+		for (u64 addr = (u64)region->va_start; addr < (u64)region->va_stop;
+			 addr += PAGE_SIZE_IN_BYTES)
 			useless += *((u8 *)addr);
 		(void)useless;
 	}
 }
 #endif
 
-static struct vmm_region *vmm_create_region(struct vmm_space *space, void *va_start, void *va_stop, u64 flags, struct vmm_region *prev, struct vmm_region *next) {
+static struct vmm_region *vmm_create_region(struct vmm_space *space, void *va_start, void *va_stop,
+											u64 flags, struct vmm_region *prev,
+											struct vmm_region *next)
+{
 	struct vmm_region *region = block_alloc(TYPE_VMM_REGION);
 
 	if (prev == NULL)
@@ -147,7 +156,8 @@ static struct vmm_region *vmm_create_region(struct vmm_space *space, void *va_st
 	return region;
 }
 
-static void vmm_remove_region(struct vmm_space *space, struct vmm_region *region) {
+static void vmm_remove_region(struct vmm_space *space, struct vmm_region *region)
+{
 	if (region->prev == NULL && region->next == NULL) {
 		space->region = NULL;
 	} else {
@@ -174,7 +184,10 @@ static void vmm_remove_region(struct vmm_space *space, struct vmm_region *region
 // But by not yielding errors, the caller have no possibilities to know
 // he did bad, and will then use the memory as if it was new, possibly overwriting preexisting data.
 // one of next and prev must be present
-struct vmm_region *vmm_insert_range(struct vmm_space *space, struct vmm_region *prev, struct vmm_region *next, void *va_start, void *va_stop, u64 flags) {
+struct vmm_region *vmm_insert_range(struct vmm_space *space, struct vmm_region *prev,
+									struct vmm_region *next, void *va_start, void *va_stop,
+									u64 flags)
+{
 	if (next != NULL && va_stop > next->va_start)
 		panic("%s:overlap|%p > %p", __func__, va_stop, next->va_start);
 	if (prev != NULL && va_start < prev->va_stop)
@@ -204,7 +217,9 @@ struct vmm_region *vmm_insert_range(struct vmm_space *space, struct vmm_region *
 }
 
 // returns the region containing the va_start and va_stop
-static struct vmm_region *vmm_add_range(struct vmm_space *space, void *va_start, void *va_stop, u64 flags) {
+static struct vmm_region *vmm_add_range(struct vmm_space *space, void *va_start, void *va_stop,
+										u64 flags)
+{
 	ASSERT(IS_ALIGNED(va_start, PAGE_SIZE_IN_BYTES), "%s: va_start should be aligned\n", __func__);
 	ASSERT(IS_ALIGNED(va_stop, PAGE_SIZE_IN_BYTES), "%s: va_stop should be aligned\n", __func__);
 	ASSERT(va_start != va_stop, "%s: va_start and va_stop shouldn't be equals\n", __func__);
@@ -219,7 +234,7 @@ static struct vmm_region *vmm_add_range(struct vmm_space *space, void *va_start,
 		u8 after_prev = prev == NULL || va_start > prev->va_start;
 		u8 before_cur = va_stop < cur->va_stop;
 		if (after_prev && before_cur)
-			break ;
+			break;
 		prev = cur;
 		cur = cur->next;
 	}
@@ -227,17 +242,19 @@ static struct vmm_region *vmm_add_range(struct vmm_space *space, void *va_start,
 	return vmm_insert_range(space, prev, cur, va_start, va_stop, flags);
 }
 
-void vmm_remove_range(struct vmm_space *space, void *va_start, void *va_stop) {
+void vmm_remove_range(struct vmm_space *space, void *va_start, void *va_stop)
+{
 	struct vmm_region *region = space->region;
 
 	while (region != NULL) {
 		if (va_start >= region->va_start && va_start < region->va_stop)
-			break ;
+			break;
 		region = region->next;
 	}
 
 	if (region == NULL)
-		panic("%s: not region matching va range %p -> %p", __func__, va_start, va_stop); // TODO: don't panic
+		panic("%s: not region matching va range %p -> %p", __func__, va_start,
+			  va_stop); // TODO: don't panic
 
 	if (va_stop > region->va_stop)
 		panic("%s: can't free non contiguous va", __func__);
@@ -249,12 +266,12 @@ void vmm_remove_range(struct vmm_space *space, void *va_start, void *va_stop) {
 	// shrink the region
 	if (region->va_start == va_start) {
 		region->va_start = va_stop;
-		return ;
+		return;
 	}
 
 	if (region->va_stop == va_stop) {
 		region->va_stop = va_start;
-		return ;
+		return;
 	}
 
 	// split the region
@@ -267,14 +284,16 @@ void vmm_remove_range(struct vmm_space *space, void *va_start, void *va_stop) {
 }
 
 // TODO: redesign the va_start and va_stop of a vmm space
-struct vmm_space *vmm_create_space(void *va_start, void *va_stop) {
+struct vmm_space *vmm_create_space(void *va_start, void *va_stop)
+{
 	struct vmm_space *space = block_alloc(TYPE_VMM_SPACE);
 	space->region = NULL;
 	mmu_init(space);
 	return space;
 }
 
-void vmm_delete_space(struct vmm_space *space) {
+void vmm_delete_space(struct vmm_space *space)
+{
 	struct vmm_region *tmp;
 
 	while (space->region != NULL) {
@@ -287,7 +306,9 @@ void vmm_delete_space(struct vmm_space *space) {
 }
 
 // returns address of first usable byte in va
-void *vmm_alloc_between(struct vmm_space *space, void *lower_va, void *upper_va, u64 size_in_pages, u64 flags) {
+void *vmm_alloc_between(struct vmm_space *space, void *lower_va, void *upper_va, u64 size_in_pages,
+						u64 flags)
+{
 	// search va range
 	u64 size_in_bytes = size_in_pages * PAGE_SIZE_IN_BYTES;
 	u64 va = (u64)lower_va;
@@ -301,8 +322,8 @@ void *vmm_alloc_between(struct vmm_space *space, void *lower_va, void *upper_va,
 
 		va = MAX(va, (u64)lower_va);
 		if ((u64)cur->va_start - va >= size_in_bytes + padding)
-			break ;
-		loop_next:
+			break;
+	loop_next:
 		va = (u64)cur->va_stop;
 		prev = cur;
 		cur = cur->next;
@@ -313,7 +334,8 @@ void *vmm_alloc_between(struct vmm_space *space, void *lower_va, void *upper_va,
 
 	va += PAGE_SIZE_IN_BYTES; // padding
 
-	struct vmm_region *region = vmm_insert_range(space, prev, cur, (void *)va, (void *)(va + size_in_bytes), flags);
+	struct vmm_region *region =
+		vmm_insert_range(space, prev, cur, (void *)va, (void *)(va + size_in_bytes), flags);
 	if (region == NULL)
 		return NULL;
 
@@ -327,11 +349,13 @@ void *vmm_alloc_between(struct vmm_space *space, void *lower_va, void *upper_va,
 }
 
 // returns address of first usable byte in va
-void *vmm_alloc_at(struct vmm_space *space, void *va, u64 size_in_pages, u64 flags) {
+void *vmm_alloc_at(struct vmm_space *space, void *va, u64 size_in_pages, u64 flags)
+{
 	if (va == NULL)
 		return NULL;
 
-	struct vmm_region *region = vmm_add_range(space, va, (void *)((u64)va + (size_in_pages * PAGE_SIZE_IN_BYTES)), flags);
+	struct vmm_region *region =
+		vmm_add_range(space, va, (void *)((u64)va + (size_in_pages * PAGE_SIZE_IN_BYTES)), flags);
 	if (region == NULL)
 		return NULL;
 
@@ -343,8 +367,10 @@ void *vmm_alloc_at(struct vmm_space *space, void *va, u64 size_in_pages, u64 fla
 	return va;
 }
 
-void *vmm_map(struct vmm_space *space, void *va, void *pa, u64 flags) {
-	struct vmm_region *region = vmm_add_range(space, va, (void *)((u64)va + PAGE_SIZE_IN_BYTES), flags);
+void *vmm_map(struct vmm_space *space, void *va, void *pa, u64 flags)
+{
+	struct vmm_region *region =
+		vmm_add_range(space, va, (void *)((u64)va + PAGE_SIZE_IN_BYTES), flags);
 	if (region == NULL)
 		return NULL;
 	if (mmu_map_page(space, va, pa, flags) != 0)
@@ -352,7 +378,8 @@ void *vmm_map(struct vmm_space *space, void *va, void *pa, u64 flags) {
 	return va;
 }
 
-void vmm_free(struct vmm_space *space, void *va, u64 size_in_pages) {
+void vmm_free(struct vmm_space *space, void *va, u64 size_in_pages)
+{
 	u64 va_stop = (u64)va + (u64)(size_in_pages * PAGE_SIZE_IN_BYTES);
 
 	vmm_remove_range(space, va, (void *)va_stop);
@@ -366,8 +393,10 @@ void vmm_free(struct vmm_space *space, void *va, u64 size_in_pages) {
 
 // will map contiguous virtual region with contiguous physical memory
 // should only be used to setup kernel code/data regions
-static void vmm_init_phys_contiguous_region(struct vmm_region *region, void *pa) {
-	for (u64 offset = 0; (u64)region->va_start + offset < (u64)region->va_stop; offset += PAGE_SIZE_IN_BYTES) {
+static void vmm_init_phys_contiguous_region(struct vmm_region *region, void *pa)
+{
+	for (u64 offset = 0; (u64)region->va_start + offset < (u64)region->va_stop;
+		 offset += PAGE_SIZE_IN_BYTES) {
 		void *_va = (void *)((u64)region->va_start + offset);
 		void *_pa = (void *)((u64)pa + offset);
 		if (mmu_map_page(kspace, _va, _pa, region->flags))
@@ -376,28 +405,35 @@ static void vmm_init_phys_contiguous_region(struct vmm_region *region, void *pa)
 }
 
 // make sure to map all phys available and reserved memory to direct mapping
-void vmm_init_direct_mapping(void) {
+void vmm_init_direct_mapping(void)
+{
 	struct pmm_phys_addr addr = pmm_next_phys_page(0);
 
 	do {
 		u64 flags = addr.type == PMM_REGION_AVAILABLE ? PAGE_KERNEL_RW : PAGE_KERNEL_RO;
-		struct vmm_region *region = vmm_add_range(kspace, DM_P2V(addr.pa), DM_P2V(addr.pa) + PAGE_SIZE_IN_BYTES, flags);
+		struct vmm_region *region =
+			vmm_add_range(kspace, DM_P2V(addr.pa), DM_P2V(addr.pa) + PAGE_SIZE_IN_BYTES, flags);
 		if (region == NULL)
 			panic("DAM");
 		kernel_dm_stop = DM_P2V(addr.pa);
 		if (mmu_map_page(kspace, DM_P2V(addr.pa), addr.pa, flags))
-			panic("%s: mapping an already mapped entry va=%p | pa=%p", __func__, DM_P2V(addr.pa), addr.pa);
+			panic("%s: mapping an already mapped entry va=%p | pa=%p", __func__, DM_P2V(addr.pa),
+				  addr.pa);
 		addr = pmm_next_phys_page(addr.pa);
 	} while (addr.pa != (void *)1); // TODO: cleaner way to return end of pmm
 }
 
-void vmm_init(void) {
+void vmm_init(void)
+{
 	// map kernel code/data and direct mapping of available memory
 	kspace = vmm_create_space((void *)HIGHER_HALF_START, (void *)HIGHER_HALF_STOP);
 
-	struct vmm_region *kuefi = vmm_add_range(kspace, kernel_vma_rw_start, kernel_vma_rw_stop, PAGE_KERNEL_RW);
-	struct vmm_region *kcode = vmm_add_range(kspace, kernel_vma_ro_start, kernel_vma_ro_stop, PAGE_KERNEL_RO);
-	struct vmm_region *kdata = vmm_add_range(kspace, kernel_vma_ro_stop, pmm_vma_stop, PAGE_KERNEL_RW);
+	struct vmm_region *kuefi =
+		vmm_add_range(kspace, kernel_vma_rw_start, kernel_vma_rw_stop, PAGE_KERNEL_RW);
+	struct vmm_region *kcode =
+		vmm_add_range(kspace, kernel_vma_ro_start, kernel_vma_ro_stop, PAGE_KERNEL_RO);
+	struct vmm_region *kdata =
+		vmm_add_range(kspace, kernel_vma_ro_stop, pmm_vma_stop, PAGE_KERNEL_RW);
 
 	vmm_init_phys_contiguous_region(kuefi, (void *)V2P(kuefi->va_start));
 	vmm_init_phys_contiguous_region(kcode, (void *)V2P(kcode->va_start));
@@ -405,23 +441,24 @@ void vmm_init(void) {
 
 	vmm_init_direct_mapping();
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	mmu_test_kernel_mapping(kspace);
-	#endif
+#endif
 
 	mmu_switch_space(kspace);
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	vmm_probe_space(kspace);
-	#endif
+#endif
 }
 
 // TODO: enhance design
 // what to do if something went wrong in the middle of the copy?
-// its a general problem in the VMM, if something went wrong in the middle of an action on the 
+// its a general problem in the VMM, if something went wrong in the middle of an action on the
 // page mapping, what should we do?
 // there is a lot of possibilites, for the moment we'll stick with instant panics.
-void vmm_copy_regions(struct vmm_space *dst, struct vmm_space *src) {
+void vmm_copy_regions(struct vmm_space *dst, struct vmm_space *src)
+{
 	struct vmm_region *region = src->region;
 
 	while (region != NULL) {
@@ -432,11 +469,13 @@ void vmm_copy_regions(struct vmm_space *dst, struct vmm_space *src) {
 	}
 }
 
-void vmm_dump_space(struct vmm_space *space) {
+void vmm_dump_space(struct vmm_space *space)
+{
 	printk("[SPACE]\n");
 	printk("---------------------------------------\n");
 	for (struct vmm_region *region = space->region; region != NULL; region = region->next) {
-		printk("%p -> %p | [%uKiB]\n", region->va_start, region->va_stop, BYTE2KB((u64)region->va_stop - (u64)region->va_start));
+		printk("%p -> %p | [%uKiB]\n", region->va_start, region->va_stop,
+			   BYTE2KB((u64)region->va_stop - (u64)region->va_start));
 	}
 }
 // END Virtual Memory Manager -----------------------

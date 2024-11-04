@@ -1,24 +1,26 @@
 #include "kernel/multitasking/process.h"
-#include "kernel/multitasking/sched.h"
 #include "kernel/mm/kheap.h"
-#include "kernel/mm/vmm.h"
 #include "kernel/mm/layout.h"
 #include "kernel/mm/paging.h"
+#include "kernel/mm/vmm.h"
+#include "kernel/multitasking/sched.h"
 
 #include "kernel/lib/bitmap/bitmap.h"
-#include "kernel/lib/string/string.h"
 #include "kernel/lib/debug/debug.h"
+#include "kernel/lib/string/string.h"
 
 static struct bitmap pid_bitmap;
 
-static u16 process_get_unused_pid(void) {
+static u16 process_get_unused_pid(void)
+{
 	u16 pid = (u16)bitmap_find_and_set(&pid_bitmap);
 	if (pid == pid_bitmap.len)
 		panic("%s: exhausted all PIDs", __func__); // NOTE: run a ripper ?
 	return pid;
 }
 
-struct process	*process_create(char *name, u64 uentry, struct process *parent) {
+struct process *process_create(char *name, u64 uentry, struct process *parent)
+{
 	struct process *proc = kmalloc(sizeof(struct process));
 	if (proc == NULL)
 		return NULL;
@@ -33,9 +35,9 @@ struct process	*process_create(char *name, u64 uentry, struct process *parent) {
 		goto fail_vmm;
 
 	vmm_copy_regions(proc->space, kspace);
-	#ifdef DEBUG
+#ifdef DEBUG
 	mmu_test_compare_mapping(kspace, proc->space);
-	#endif
+#endif
 	void *ustack = vmm_alloc_at(proc->space, (void *)0xf000, (u64)8, PAGE_USER_RW);
 	if (ustack == NULL)
 		goto fail_ustack;
@@ -59,19 +61,22 @@ struct process	*process_create(char *name, u64 uentry, struct process *parent) {
 	memset(proc->signals_handlers, 0, sizeof(void *) * PROCESS_NSIG);
 	return proc;
 
-	fail_ustack:
+fail_ustack:
 	vmm_delete_space(proc->space);
-	fail_vmm:
+fail_vmm:
 	kfree(proc->kstack);
-	fail_kstack:
+fail_kstack:
 	kfree(proc);
 	return NULL;
 }
 
 // the boostrapping kernel stack is a process as the others and should be setup
-void process_init(void) {
-	ASSERT(PROCESS_NSIG <= ((struct process *)0)->masked_signals, "%s: too much possibilites of signals vs masked_signals bitmap\n", __func__);
-	ASSERT(PROCESS_NSIG <= ((struct process *)0)->pending_signals, "%s: too much possibilites of signals vs pending_signals bitmap\n", __func__);
+void process_init(void)
+{
+	ASSERT(PROCESS_NSIG <= ((struct process *)0)->masked_signals,
+		   "%s: too much possibilites of signals vs masked_signals bitmap\n", __func__);
+	ASSERT(PROCESS_NSIG <= ((struct process *)0)->pending_signals,
+		   "%s: too much possibilites of signals vs pending_signals bitmap\n", __func__);
 	struct process *proc = kmalloc(sizeof(struct process));
 	if (proc == NULL)
 		panic("%s: failed to init boot process");

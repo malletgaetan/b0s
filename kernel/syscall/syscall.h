@@ -1,9 +1,9 @@
 #ifndef SYSCALL_H
-# define SYSCALL_H
+#define SYSCALL_H
 
-# include "kernel/types.h"
-# include "kernel/cpu.h"
+#include "kernel/cpu.h"
+#include "kernel/types.h"
 
-void	syscall(const struct trap_frame *tf);
+void syscall(const struct trap_frame *tf);
 
 #endif

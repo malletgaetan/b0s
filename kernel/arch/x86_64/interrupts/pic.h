@@ -17,6 +17,6 @@
 
 #define ICW_4 0x01
 
-void	pic_disable(void);
+void pic_disable(void);
 
 #endif

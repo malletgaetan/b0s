@@ -1,9 +1,10 @@
 #include "kernel/cpu.h"
 
-#include "kernel/lib/printk/printk.h"
 #include "kernel/lib/debug/debug.h"
+#include "kernel/lib/printk/printk.h"
 
-void panic(char *fmt, ...) {
+void panic(char *fmt, ...)
+{
 	va_list args;
 	printk("kernel panic: ");
 	va_start(args, fmt);
